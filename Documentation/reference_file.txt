@@ -3,3 +3,5 @@ https://en.wikipedia.org/wiki/Linear_differential_equation
 http://math.stackexchange.com/questions/1626362/why-does-the-sum-of-two-linearly-independent-solutions-of-a-second-order-homogen
 
 http://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/plural.html
+
+http://doc.sagemath.org/html/en/tutorial/programming.html
