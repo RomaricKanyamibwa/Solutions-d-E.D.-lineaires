@@ -38,8 +38,12 @@ class dfin_op(object):
         print (self.__diff_eq)
 
     def __add__(self,other):
-        """Addition de 2 equa diff"""
-        return self.__diff_eq.lclm(other.get_diff_eq())
+        """Addition de 2 equa diff"""   
+        if len(self.__init_cond) == len(other.__init_cond) :
+            return self.__diff_eq.lclm(other.get_diff_eq())
+        
+        elif len(self.__init_cond) > len(other.__init_cond) :
+           ## other.__init_cond.append(derivative(other.__diff_eq,
 
     def __mul__(self,other):
         """Multiplication de 2 equa diff"""
