@@ -50,10 +50,11 @@ class dfin_op(object):
         
         elif len(self.__init_cond) > len(other.__init_cond) :
             i = len(self.__init_cond) - len(other.__init_cond)
+            
             while (i < len(self.__init_cond)):
-                   other.__init_cond.append(...)
-                   i += 1
-                   return 
+                    other.__init_cond.append(...)
+                    i += 1
+                    return 
                    
 
     def __mul__(self,other):
