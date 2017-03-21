@@ -44,12 +44,16 @@ class dfin_op(object):
             newlist =[]
             while(i< len(self.__init_cond)):
                 newlist.append(self.__init_cond[i] + other.__init_cond)
+                i += 1
             z = dfin_op(self.__diff_eq.lclm(other.get_diff_eq()),newlist)
             return z
         
         elif len(self.__init_cond) > len(other.__init_cond) :
-            i = len(self.__init_cond) - len(other.init_cond)
+            i = len(self.__init_cond) - len(other.__init_cond)
             while (i < len(self.__init_cond):
+                   other.__init_cond.append(...)
+                   i += 1
+                   return 
                    
 
     def __mul__(self,other):
@@ -59,7 +63,9 @@ class dfin_op(object):
             newlist =[]
             while(i< len(self.__init_cond)):
                 newlist.append(self.__init_cond[i] * other.__init_cond[i])
+                i+= 1   
             z = dfin_op(self.__diff_eq.symmetric_product(other.get_diff_eq()),newlist)
+                   
             return z
                    
         elif len(self.__init_cond) > len(other.__init_cond) :
