@@ -40,11 +40,28 @@ class dfin_op(object):
     def __add__(self,other):
         """Addition de 2 equa diff"""   
         if len(self.__init_cond) == len(other.__init_cond) :
-            return self.__diff_eq.lclm(other.get_diff_eq())
+            i=0
+            newlist =[]
+            while(i< len(self.__init_cond)):
+                newlist.append(self.__init_cond[i] + other.__init_cond)
+            z = dfin_op(self.__diff_eq.lclm(other.get_diff_eq()),newlist)
+            return z
         
         elif len(self.__init_cond) > len(other.__init_cond) :
-           ## other.__init_cond.append(derivative(other.__diff_eq,
+            i = len(self.__init_cond) - len(other.init_cond)
+            
 
     def __mul__(self,other):
         """Multiplication de 2 equa diff"""
-        return self.__diff_eq*other.get_diff_eq()
+        if len(self.__init_cond) == len(other.__init_cond) :
+            i=0
+            newlist =[]
+            while(i< len(self.__init_cond)):
+                newlist.append(self.__init_cond[i] * other.__init_cond)
+            z = dfin_op(self.__diff_eq.symmetric_product(other.get_diff_eq()),newlist)
+            return z
+        elif len(self.__init_cond) > len(other.__init_cond) :
+            i = len(self.__init_cond) - len(other.init_cond)
+            
+            
+       
