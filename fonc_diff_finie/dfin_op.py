@@ -49,7 +49,8 @@ class dfin_op(object):
         
         elif len(self.__init_cond) > len(other.__init_cond) :
             i = len(self.__init_cond) - len(other.init_cond)
-            
+            while (i < len(self.__init_cond):
+                   
 
     def __mul__(self,other):
         """Multiplication de 2 equa diff"""
@@ -57,9 +58,10 @@ class dfin_op(object):
             i=0
             newlist =[]
             while(i< len(self.__init_cond)):
-                newlist.append(self.__init_cond[i] * other.__init_cond)
+                newlist.append(self.__init_cond[i] * other.__init_cond[i])
             z = dfin_op(self.__diff_eq.symmetric_product(other.get_diff_eq()),newlist)
             return z
+                   
         elif len(self.__init_cond) > len(other.__init_cond) :
             i = len(self.__init_cond) - len(other.init_cond)
             
