@@ -43,7 +43,7 @@ class dfin_op(object):
             i=0
             newlist =[]
             while(i< len(self.__init_cond)):
-                newlist.append(self.__init_cond[i] + other.__init_cond)
+                newlist.append(self.__init_cond[i] + other.__init_cond[i])
                 i += 1
             z = dfin_op(self.__diff_eq.lclm(other.get_diff_eq()),newlist)
             return z
