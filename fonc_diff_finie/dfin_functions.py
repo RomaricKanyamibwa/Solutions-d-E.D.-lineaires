@@ -14,12 +14,23 @@ def calc_init_con(diff_eq,n):
     if(n<0):
         raise ValueError,"order is always a positive integer"
     length_IC=len(diff_eq.get_init_cond())
-    if(length_IC>n):
+    if(length_IC>=n):
+        print "IC:",diff_eq.get_init_cond()[:n+1]
         return diff_eq.get_init_cond()[:n+1]
     else:
+        d=copy(diff_eq.get_diff_eq())
+        Dx=DifferentialOperators()
+        A = OreAlgebra(QQ['x'], 'Dx')
+        d=A('Dx')*d
         L=diff_eq.get_diff_eq().coefficients()
-        print L[0]
-        print "Val:",L[0](1)
+        print "Coef:",L
+        print "P(x)=",L[0]
+        print "P(1)=",L[0](1)
+        L=d.coefficients()
+        print "Coef:",L
+        print "P(x)=",L[0]
+        print "P(1)=",L[0](1)
+        L=L+[]
         
         
 def complete_init_cond(self,other,op_order):
