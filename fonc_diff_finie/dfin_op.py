@@ -45,6 +45,9 @@ class dfin_op(object):
         print ("Dfinite equation:")
         print ("Initiale Conditions:",self.__init_cond)
         print ("Equation:",self.__diff_eq)
+        
+    def __eq__(self,other):
+        return self.__diff_eq==other.get_diff_eq() and self.__init_cond==other.get_init_cond()
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
