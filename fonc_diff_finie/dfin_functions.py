@@ -3,7 +3,37 @@ from dfin_op import *
 from sage.calculus.var import var
 from sage.all import *
 
+A = OreAlgebra(QQ['x'], 'Dx')
 
+def complete_coeff(diff_eq):
+    """
+    This function returns a list with the coefficients of diff_eq
+    -diff_eq is a differential of <class 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'>
+    """
+    L=[0]*(diff_eq.order()+1)
+    mp=copy(diff_eq)
+    while(mp!=0):
+        coef=mp.coefficients()
+        L[mp.order()]=coef[-1]
+        ch="Dx^"+str(mp.order())
+        d=A(ch)
+        mp=mp-L[mp.order()]*d
+    return L
+
+def calc_sum_func(L,CI,x):
+    """
+    -L is a list of functions
+    -CI is a list of numbers (Initial conditions at x)
+    -x the point at which we evaluate the function
+    """
+    print L
+    if(len(L)!=len(CI)+1):
+        raise ValueError,"Incompatible length of L and CI .CI and L must have a length difference of 1"
+    t=0
+    for i in range(len(L)-1):
+        l=L[i](x)
+        t+=CI[i]*l
+    return -t
 
 def calc_init_con(diff_eq,n):
     """
@@ -20,17 +50,23 @@ def calc_init_con(diff_eq,n):
     else:
         d=copy(diff_eq.get_diff_eq())
         Dx=DifferentialOperators()
-        A = OreAlgebra(QQ['x'], 'Dx')
         d=A('Dx')*d
-        L=diff_eq.get_diff_eq().coefficients()
+        L=diff_eq.complete_coeff()
+        CI=diff_eq.get_init_cond()
+        CI=CI+[calc_sum_func(L,CI,diff_eq.get_x0())]
+        order_d=d.order()
         print "Coef:",L
         print "P(x)=",L[0]
-        print "P(1)=",L[0](1)
-        L=d.coefficients()
+        print "P("+str(diff_eq.get_x0())+")=",L[0](diff_eq.get_x0())
+        L=complete_coeff(d)
         print "Coef:",L
         print "P(x)=",L[0]
-        print "P(1)=",L[0](1)
-        L=L+[]
+        print "P("+str(diff_eq.get_x0())+")=",L[0](diff_eq.get_x0())
+        print "Before add IC:",CI
+        CI=CI+[calc_sum_func(L,CI,diff_eq.get_x0())]
+        print "After add IC:",CI
+        while(n!=order_d):
+        
         
         
 def complete_init_cond(self,other,op_order):
