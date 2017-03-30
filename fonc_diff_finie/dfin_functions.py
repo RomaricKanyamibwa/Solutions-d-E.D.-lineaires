@@ -65,7 +65,6 @@ def calc_init_con(diff_eq,n):
         print "Before add IC:",CI
         CI=CI+[calc_sum_func(L,CI,diff_eq.get_x0())]
         print "After add IC:",CI
-        while(n!=order_d):
         
         
         
