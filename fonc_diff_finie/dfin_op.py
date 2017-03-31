@@ -125,7 +125,22 @@ class dfin_op(object):
         return str(ch)
         
     def __eq__(self,other):
-        return self.__diff_eq==other.get_diff_eq() and self.__init_cond==other.get_init_cond()
+        """
+        Tests whether or not 2 functions are equal or not 
+        """ 
+        if self.__diff_eq==other.get_diff_eq() and self.__init_cond==other.get_init_cond():
+            return True
+        if self.__init_cond!=other.get_init_cond():
+            return False
+        temp_diff=self-other
+        L=temp_diff.get_init_cond()
+        zeroList=[0]*len(L)
+        if((temp_diff.get_diff_eq()==other.get_diff_eq() or self.__diff_eq==temp_diff.get_diff_eq()) and L==zeroList):
+            return True
+        elif calc_init_cond(temp_diff,temp_diff.order()*2)==[0]*(temp_diff.order()*2):
+            return True
+        elif L!=zeroList:
+            return False
     
     def get_dfin_op(self):
         return (self.__diff_eq,self.__init_cond)
@@ -145,6 +160,21 @@ class dfin_op(object):
             d=A(ch)
             mp=mp-L[mp.order()]*d
         return L
+    
+    def __sub__(self,other):
+        """Sustraction de 2 equa diff"""
+        newlist =[]
+        z1=-other.get_diff_eq()
+        z0=self.__diff_eq.lclm(z1)
+        n=z0.order()
+        L1=calc_init_con(self,n-1)
+        L2=calc_init_con(other,n-1)
+        i=0
+        while(i< n):
+            newlist.append(L1[i] - L2[i])
+            i += 1
+        z = dfin_op(z0,newlist,self.__x0)
+        return z
 
     def __add__(self,other):
         """Addition de 2 equa diff"""

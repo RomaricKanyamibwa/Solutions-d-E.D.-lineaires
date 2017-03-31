@@ -73,5 +73,14 @@ Z=cos4t*exp3t;
 print("cos4t*exp3t")
 Z.print_eq()
 print('-------------------------------------------------------------------------')
+print("Dif of exp3t and cos4t")
+print('-------------------------------------------------------------------------')
+dcos4t=dfin_op(Dx*(Dx^2+16),calc_init_con(cos4t,2))
+Z=cos4t-dcos4t;
+print("cos4t-cos4t")
+Z.print_eq()
+print "Test of equality again:"
+print (cos4t==dcos4t)
+print('-------------------------------------------------------------------------')
 
 
