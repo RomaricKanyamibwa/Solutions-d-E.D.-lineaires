@@ -1,6 +1,6 @@
 print("Starting test script")
 from ore_algebra import *;
-from  dfin_op import *;R.<x> = PolynomialRing(ZZ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
+from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
 p=dfin_op(K,[0,1,1],0);
 print('-------------------------------------------------------------------------')
 K=A.random_element(2);s=dfin_op(K,[0,1],0);
@@ -41,7 +41,7 @@ print("Test of dfin_functio:complete list of coefficients")
 print('-------------------------------------------------------------------------')
 mp=(x^3-5*x)*Dx^5+54*x*Dx^3+0*Dx+x^2-5;L1=[0]*(mp.order()+1)
 print "Dif eq:",mp
-L=complete_coeff(mp)
+L=mp.list()
 print "Coef:",mp.coefficients()
 print "Compl coef:",L
 print 'S eq'
@@ -58,7 +58,6 @@ print "Dif eq:exp3t=",exp3t.get_diff_eq()
 n=4
 IC=calc_init_con(exp3t,n)
 print "Initial condition for n=",n,":",IC
-print('-------------------------------------------------------------------------')
 print('-------------------------------------------------------------------------')
 print("Sum of exp3t and cos4t")
 print('-------------------------------------------------------------------------')
@@ -80,6 +79,7 @@ Z=cos4t-dcos4t;
 print("cos4t-cos4t")
 Z.print_eq()
 print "Test of equality again:"
+print "cos4t==dcos4t"
 print (cos4t==dcos4t)
 print('-------------------------------------------------------------------------')
 
