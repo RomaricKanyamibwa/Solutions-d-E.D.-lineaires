@@ -46,7 +46,7 @@ def calc_init_con(diff_eq,n):
         while(len(CI)-1<n):
             d=A('Dx')*d
             L=d.list()
-            CI=CI+[-calc_sum_func(L,CI,x0)]
+            CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
     if(not(isinstance(diff_eq,dfin_op)) and not(isinstance(n,int))):
         raise TypeError,"Expected 2 aguments of type dfin_op and int type"
