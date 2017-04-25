@@ -226,7 +226,7 @@ class dfin_op(object):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = dfin_op(z0,newlist,self.__x0)
         return z
-    
+
     def derivative(self):
         tmp_diff=self.__diff_eq
         tmp_IC=self.__init_cond
@@ -234,14 +234,24 @@ class dfin_op(object):
         n=tmp_diff.order()
         tmp_IC=calc_init_con(self,n-1)
         return dfin_op(tmp_diff,tmp_IC,self.__x0)
-    
+
     def PolyToDiff(P,x,n = 1): 
 	h = copy(P)
 	for i in range(n) : 
 	    h = diff(h,x)
-	    ch = 'Dx^' + str(n)
-	    z = A(ch) - h
-	    return z
+    	ch = 'Dx^' + str(n)
+    	z = A(ch) - h
+	return z
+
+   def composition(self,g):
+        """Fonction qui retourne la composition de diff_op avec f (fog)"""
+        if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
+		print("Fraction Field",g)
+		d=self.__diff_eq.annihilator_of_composition(g)
+		print "Composition:",d
+		return d
+	else:
+		raise TypeError,"A Polynomial or a Rational function is expected as argument"
 
 
         
