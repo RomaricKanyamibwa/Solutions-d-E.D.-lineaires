@@ -236,9 +236,9 @@ class dfin_op(object):
         return dfin_op(tmp_diff,tmp_IC,self.__x0)
     
     def PolyToDiff(P,x,n = 1): 
-	    h = copy(P)
-	    for i in range(n) : 
-		    h = diff(h,x)
+	h = copy(P)
+	for i in range(n) : 
+	    h = diff(h,x)
 	    ch = 'Dx^' + str(n)
 	    z = A(ch) - h
 	    return z
