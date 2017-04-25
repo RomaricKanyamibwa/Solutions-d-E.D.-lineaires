@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 14 14:44:25 2017
-@author: 3600594
+@author: HAKAM Sophia ,DJERRAB Mohamed, KANYAMIBWA Romaric
 """
 
 from ore_algebra import *
@@ -149,6 +149,9 @@ class dfin_op(object):
             return True
         elif L!=zeroList:
             return False
+        
+    def __ne__(self,other):
+        return not(self==other)
     
     def get_dfin_op(self):
         return (self.__diff_eq,self.__init_cond)
@@ -232,3 +235,15 @@ class dfin_op(object):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = dfin_op(z0,newlist,self.__x0)
         return z
+    
+    def derivative(self):
+        tmp_diff=self.__diff_eq
+        tmp_IC=self.__init_cond
+        tmp_diff=A('Dx')*tmp_diff
+        n=tmp_diff.order()
+        tmp_IC=calc_init_con(self,n-1)
+        return dfin_op(tmp_diff,tmp_IC,self.__x0)
+        
+        
+        
+        
