@@ -101,18 +101,9 @@ class dfin_op(object):
     
     def get_x0(self):
         return self.__x0
-    
-    def set_x0(self,x0):
-        self.__x0 = x0
-
-    def set_init_cond(self,init_cond):
-        self.__init_cond = init_cond
 
     def get_init_cond(self):
         return self.__init_cond
-
-    def set_diff_eq(self, diff_eq):
-        self.__diff_eq = diff_eq
         
     def order(self):
         if(isinstance(self.__diff_eq,Polynomial)):
