@@ -243,7 +243,7 @@ class dfin_op(object):
     	z = A(ch) - h
 	return z
 
-   def composition(self,g):
+    def composition(self,g):
         """Fonction qui retourne la composition de diff_op avec f (fog)"""
         if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
 		print("Fraction Field",g)
@@ -252,6 +252,30 @@ class dfin_op(object):
 		return d
 	else:
 		raise TypeError,"A Polynomial or a Rational function is expected as argument"
+
+		def coeff_power_series(self,order=10):
+        """
+        """
+        diff_eq=self.__diff_eq
+        CI=calc_init_con(self,order-1)
+        L=[0]*order
+        if(self.__x0==0):
+            L[0]=CI[0]
+            f=1
+            for i in range(1,order):
+                f=f*i
+                L[i]=CI[i]/f
+            return L
+        else:
+            an=diff_eq.to_S(OreAlgebra(ZZ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle
+            an_order=an.order()
+            L=an.to_list(CI,order)
+            return L
+       
+    def power_series(self,order=6):
+        """
+        """
+        return self.__diff_eq.power_series_solutions(order)
 
 
         
