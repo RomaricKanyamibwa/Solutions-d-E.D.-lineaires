@@ -235,13 +235,19 @@ class dfin_op(object):
         tmp_IC=calc_init_con(self,n-1)
         return dfin_op(tmp_diff,tmp_IC,self.__x0)
 
-    def PolyToDiff(P,x,n = 1): 
-	h = copy(P)
-	for i in range(n) : 
-	    h = diff(h,x)
-    	ch = 'Dx^' + str(n)
-    	z = A(ch) - h
-	return z
+def PolyToDiff(self,P,n = 1,x = 0):
+        if(isinstance(P,Polynomial)):
+            h = copy(P)
+            L = [0]*n
+            for i in range(n):
+                L[i] = P(x)
+                P = P.derivative()
+            h=P
+            ch = 'Dx^' + str(n)
+            z = A(ch) - h
+            return dfin_op(z,L,x)
+        else:
+            raise TypeError,"A Polynomial function is expected as argument"
 
     def composition(self,g):
         """Fonction qui retourne la composition de diff_op avec f (fog)"""
