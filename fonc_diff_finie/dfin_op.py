@@ -10,7 +10,11 @@ from sage.functions.other import *
 from sage.all import *
 from ore_algebra.ore_operator import OreOperator, UnivariateOreOperator
 from sage.rings.polynomial.polynomial_element import Polynomial
+from sage.rings.fraction_field_element import FractionFieldElement #Espace de Fonction rationelle
+from sage.rings.rational_field import QQ
+from sage.calculus.functional import derivative
 
+K = FractionField(PolynomialRing(QQ, 'x')) #utiliser pour faire le polynome P(x,g(x)) de la composition
 A = OreAlgebra(QQ['x'], 'Dx')
 
 
@@ -101,7 +105,7 @@ class dfin_op(object):
     
     def get_x0(self):
         return self.__x0
-
+   
     def get_init_cond(self):
         return self.__init_cond
         
@@ -226,10 +230,10 @@ class dfin_op(object):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = dfin_op(z0,newlist,self.__x0)
         return z
-
-   def get_derivative(self):
+    
+    def get_derivative(self):
         """
-        Cette fonction calcule le dfin_op associé à la derive de self
+        Cette fonction calcule le dfin_op associé à la derive self
         """
         tmp_diff=self.__diff_eq
         tmp_IC=self.__init_cond
@@ -314,7 +318,7 @@ class dfin_op(object):
             return dfin_op(z,L,x)
         else:
             raise TypeError,"A Polynomial function is expected as argument"
-        
-        
+
+
         
         
