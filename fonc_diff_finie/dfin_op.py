@@ -20,9 +20,10 @@ A = OreAlgebra(QQ['x'], 'Dx')
 
 def calc_sum_func(L,CI,x):
     """
-    -L is a list of functions
-    -CI is a list of numbers (Initial conditions at x)
-    -x the point at which we evaluate the function
+    -L is a list of functions L=[f1,f2,. . . . ,fn]
+    -CI is a list of numbers (Initial conditions at x) CI=[g1(x0),g2(x0), . . . . . ,gn(x0)]
+    -x is an x0 point at which we evaluate the functions in L
+    Cette fonction calcule H(x0)=-(f1(x0)*g1(x0)+f2(x0)*g2(x0)+ . . . . . +fn(x0)*gn(x0))
     """
     if(len(L)<len(CI)+1):
         raise ValueError,"Incompatible length of L and CI .CI and L must have a length difference of 1"
@@ -37,8 +38,19 @@ def calc_sum_func(L,CI,x):
 
 def calc_init_con(diff_eq,n):
     """
-    Function that calculates the initial condition for Dx^n*f where f is the function that diff_eq describes
-    diff_eq is of dfin_op type
+    -diff_eq est une variable de type dfin_op 
+    -n est un entier
+    Cette function calcule les n premiers conditions initiales de diff_eq
+    
+    Exemple:
+    
+    sage: from ore_algebra import *;
+    sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
+    sage: diff_eq= Dx^2+16
+    sage: cos4t=dfin_op(diff_eq,[1,0])
+    sage: calc_init_con(cos4t,5)
+    [1, 0, -16, 0, 256, 0]
+    
     """
     if(isinstance(diff_eq.get_diff_eq(),Polynomial)):
         
@@ -77,9 +89,22 @@ class dfin_op(object):
 
     """Calcul formel sur des solutions d'équations
     différentielles linéaires
-        -diff_eq est une equation differentiel
-        -init_cond est une liste de conditions initiales de notre fonction
-        -et x0 est le point surlequel on definit les conditions initiales
+        -diff_eq est une equation differentielle de type 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'
+        -init_cond est une liste de conditions initiales
+        -et x0 (optionel) est le point sur lequel on definit les conditions initiales
+        
+        
+    Exemple:
+    
+    sage: from ore_algebra import *;
+    sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
+    sage: diff_eq= Dx-4
+    sage: exp4t=dfin_op(diff_eq,[1])
+    
+     ou
+     
+    sage: exp4t=dfin_op(diff_eq,[1],0)
+        
     """
     
     def __init__(self,diff_eq,init_cond=[],x0=0):
@@ -101,23 +126,57 @@ class dfin_op(object):
             raise TypeError,"Incompatible type: expected diff_eq of Polynomial or UnivariateOreOperator type"
 
     def get_diff_eq(self):
+        """
+        L'equation differentiel associé à self
+        """
         return self.__diff_eq
     
     def get_x0(self):
         return self.__x0
    
     def get_init_cond(self):
+        """
+        Retourne la liste avec les conditions initiales
+        """
         return self.__init_cond
         
     def order(self):
+        """
+        L'ordre de l'equation differentiel associé à self
+        
+        Exemple:
+        sage: diff_eq= Dx^7+16*x*Dx^4
+        sage: D=dfin_op(diff_eq,[1,0])
+        sage: D.order()
+        7
+        """
         if(isinstance(self.__diff_eq,Polynomial)):
             return 0
         return self.__diff_eq.order()
 
     def degree(self):
+        """
+        Retourne le degree du polynome de plus grand degree
+        
+        Exemple:
+        sage: D=x*Dx+x^2
+        sage: D=dfin_op(D,[1])
+        sage: D.degree()
+        2
+        """
         return self.__diff_eq.degree()
 
     def print_eq(self):
+        """
+        Fonction d'affichage de dfin_op
+        
+        Exemple:
+        sage: D=x*Dx+x^2
+        sage: D=dfin_op(D,[1])
+        Dfinite equation:
+        ('Initiale Conditions at x0=0:', [1])
+        ('Equation:', x*Dx + x^2)
+        """
         print ("Dfinite equation:")
         print ("Initiale Conditions at x0="+str(self.__x0)+":",self.__init_cond)
         print ("Equation:",self.__diff_eq)
@@ -146,15 +205,29 @@ class dfin_op(object):
             return False
         
     def __ne__(self,other):
+        """
+        """
         return not(self==other)
     
     def get_dfin_op(self):
+        """
+        Un tuple avec l'equation differentiel et les conditions initiales
+        """
         return (self.__diff_eq,self.__init_cond)
     
     def coefficients(self):
         """
         This function returns a list with the coefficients of diff_eq
-        -diff_eq is a UnivariateOreOperator)
+        -diff_eq est de type UnivariateOreOperator
+        
+        Exemple:
+        sage: from ore_algebra import *;
+        sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
+        sage: p=dfin_op(K,[0,1,1],0);
+        sage: print p
+        (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1])
+        sage: p.coefficients()
+        [34/3*x^2 - 7, -x^2 + x - 3/2, -2*x^2 + x + 7, 1/64*x^2]
         """
         if(isinstance(self.__diff_eq,Polynomial)):
             return [self.__diff_eq]
@@ -234,6 +307,12 @@ class dfin_op(object):
     def get_derivative(self):
         """
         Cette fonction calcule le dfin_op associé à la derive self
+        
+        Exemple:
+        sage: print p
+            (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1])
+        sage: print p.get_derivative()
+            (1/64*x^2*Dx^4 + (-2*x^2 + 33/32*x + 7)*Dx^3 + (-x^2 - 3*x - 1/2)*Dx^2 + (34/3*x^2 - 2*x - 6)*Dx + 68/3*x,[0, 1, 1, -11/2])
         """
         tmp_diff=self.__diff_eq
         tmp_IC=self.__init_cond
@@ -246,6 +325,14 @@ class dfin_op(object):
         """
         Fonction qui retourne la composition de diff_op avec f (fog)
         Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme un dfin_op
+        
+        Exemple:
+        sage: cos4t=dfin_op(Dx^2+4,[1,0])
+        sage: cos4t.composition(x^2)
+            ('Fraction Field', x^2)
+            P(x,g)= 0
+            Composition: x*Dx^2 - Dx + 64*x^3
+            x*Dx^2 - Dx + 64*x^3
         """
         
         if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
@@ -267,6 +354,11 @@ class dfin_op(object):
     def coeff_power_series(self,order=10):
         """
         Les coeffiecients de la serie formelle associé à self
+        
+        Exemple:
+        
+        sage: cos4t.coeff_power_series()
+        [1, 0, -8, 0, 32/3, 0, -256/45, 0, 512/315, 0]
         """
         diff_eq=self.__diff_eq
         CI=calc_init_con(self,order-1)
@@ -288,6 +380,11 @@ class dfin_op(object):
         """
         order: est un entier naturel qui represente l'ordre de developement de la serie entiere
         Cette fonction retourne le developpement en serie  de l'equation differentielle self
+        
+        Exemple:
+        
+        sage: cos4t.power_series(10)
+        512/315*x^8 - 256/45*x^6 + 32/3*x^4 - 8*x^2 + 1
         """
         L=self.coeff_power_series(order)
         
@@ -298,7 +395,14 @@ class dfin_op(object):
         P: est un polynome
         n: est l'ordre de l'equa diff à construire
         x: est le point x0 surlequel on definira les conditions initiales
-        Cette fonction retourne la dfin_op associé au polynome  P dans un point x
+        Cette fonction retourne la dfin_op associé au polynome  P au point x
+        
+        Exemple:
+        
+        sage: P=3*x^4 - 6*x^3 + 5
+        sage: print cos4t.PolyToDiff(P)
+        (Dx - 12*x^3 + 18*x^2,[5])
+
         """
         if(isinstance(P,Polynomial)):
             h = copy(P)
