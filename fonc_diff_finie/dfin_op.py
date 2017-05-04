@@ -227,40 +227,42 @@ class dfin_op(object):
         z = dfin_op(z0,newlist,self.__x0)
         return z
 
-    def derivative(self):
+   def get_derivative(self):
+        """
+        Cette fonction calcule le dfin_op associé à la derive de self
+        """
         tmp_diff=self.__diff_eq
         tmp_IC=self.__init_cond
         tmp_diff=A('Dx')*tmp_diff
         n=tmp_diff.order()
         tmp_IC=calc_init_con(self,n-1)
         return dfin_op(tmp_diff,tmp_IC,self.__x0)
-
-def PolyToDiff(self,P,n = 1,x = 0):
-        if(isinstance(P,Polynomial)):
-            h = copy(P)
-            L = [0]*n
-            for i in range(n):
-                L[i] = P(x)
-                P = P.derivative()
-            h=P
-            ch = 'Dx^' + str(n)
-            z = A(ch) - h
-            return dfin_op(z,L,x)
-        else:
-            raise TypeError,"A Polynomial function is expected as argument"
-
+    
     def composition(self,g):
-        """Fonction qui retourne la composition de diff_op avec f (fog)"""
-        if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
-		print("Fraction Field",g)
-		d=self.__diff_eq.annihilator_of_composition(g)
-		print "Composition:",d
-		return d
-	else:
-		raise TypeError,"A Polynomial or a Rational function is expected as argument"
-
-		def coeff_power_series(self,order=10):
         """
+        Fonction qui retourne la composition de diff_op avec f (fog)
+        Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme un dfin_op
+        """
+        
+        if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
+            print("Fraction Field",g)
+            x, y = QQ['x','y'].gens()
+            P=g(x)-y
+            print "P(x,g)=",P(x,g)
+            if(P(x,g)==0):
+                d=self.__diff_eq.annihilator_of_composition(g)
+                print "Composition:",d
+            else:
+                print "The Result is not a Dfinite function"
+            return d
+            
+        else:
+            raise TypeError,"A Polynomial or a Rational function is expected as argument"
+            
+    
+    def coeff_power_series(self,order=10):
+        """
+        Les coeffiecients de la serie formelle associé à self
         """
         diff_eq=self.__diff_eq
         CI=calc_init_con(self,order-1)
@@ -273,17 +275,45 @@ def PolyToDiff(self,P,n = 1,x = 0):
                 L[i]=CI[i]/f
             return L
         else:
-            an=diff_eq.to_S(OreAlgebra(ZZ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle
+            an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle 
             an_order=an.order()
             L=an.to_list(CI,order)
             return L
-       
+        
     def power_series(self,order=6):
         """
+        order: est un entier naturel qui represente l'ordre de developement de la serie entiere
+        Cette fonction retourne le developpement en serie  de l'equation differentielle self
         """
-        return self.__diff_eq.power_series_solutions(order)
-
-
+        L=self.coeff_power_series(order)
+        
+        return K(L)
+    
+    def PolyToDiff(self,P,n = 1,x = 0):
+        """
+        P: est un polynome
+        n: est l'ordre de l'equa diff à construire
+        x: est le point x0 surlequel on definira les conditions initiales
+        Cette fonction retourne la dfin_op associé au polynome  P dans un point x
+        """
+        if(isinstance(P,Polynomial)):
+            h = copy(P)
+            L = [0]*n
+            for i in range(n):
+                L[i] = P(x)
+                tmp=P
+                P = P.derivative()
+                if(P==0):
+                    L=L[:i]
+                    n=i
+                    P=tmp
+                    break
+            h=P
+            ch = 'Dx^' + str(n)
+            z = A(ch) - h
+            return dfin_op(z,L,x)
+        else:
+            raise TypeError,"A Polynomial function is expected as argument"
         
         
         
