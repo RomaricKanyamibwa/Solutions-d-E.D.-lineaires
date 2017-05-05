@@ -392,7 +392,7 @@ class dfin_op(object):
     
     def PolyToDiff(self,P,n = 1,x = 0):
         """
-        P: est un polynême
+        P: est un polynôme
         n: est l'ordre de l'equa diff à construire
         x: est le point x0 sur lequel on définira les conditions initiales
         Cette fonction retourne la dfin_op associée au polynome P au point x
