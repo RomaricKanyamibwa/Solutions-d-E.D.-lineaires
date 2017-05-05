@@ -40,7 +40,7 @@ def calc_init_con(diff_eq,n):
     """
     -diff_eq est une variable de type dfin_op 
     -n est un entier
-    Cette function calcule les n premiers conditions initiales de diff_eq
+    Cette fonction calcule les n premières conditions initiales de diff_eq
     
     Exemple:
     
@@ -127,7 +127,7 @@ class dfin_op(object):
 
     def get_diff_eq(self):
         """
-        L'equation differentiel associé à self
+        L'équation différentielle associée à self
         """
         return self.__diff_eq
     
@@ -142,7 +142,7 @@ class dfin_op(object):
         
     def order(self):
         """
-        L'ordre de l'equation differentiel associé à self
+        L'ordre de l'équation différentielle associée à self
         
         Exemple:
         sage: diff_eq= Dx^7+16*x*Dx^4
@@ -156,7 +156,7 @@ class dfin_op(object):
 
     def degree(self):
         """
-        Retourne le degree du polynome de plus grand degree
+        Retourne le degré du polynôme de plus grand degré
         
         Exemple:
         sage: D=x*Dx+x^2
@@ -211,7 +211,7 @@ class dfin_op(object):
     
     def get_dfin_op(self):
         """
-        Un tuple avec l'equation differentiel et les conditions initiales
+        Un tuple avec l'équation differentielle et les conditions initiales
         """
         return (self.__diff_eq,self.__init_cond)
     
@@ -306,7 +306,7 @@ class dfin_op(object):
     
     def get_derivative(self):
         """
-        Cette fonction calcule le dfin_op associé à la derive self
+        Cette fonction calcule le dfin_op associé à la dérivée self
         
         Exemple:
         sage: print p
@@ -324,7 +324,7 @@ class dfin_op(object):
     def composition(self,g):
         """
         Fonction qui retourne la composition de diff_op avec f (fog)
-        Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme un dfin_op
+        Pour l'instant, la fonction retourne la composition qu'en forme d'une équation différentielle et non comme un dfin_op
         
         Exemple:
         sage: cos4t=dfin_op(Dx^2+4,[1,0])
@@ -353,7 +353,7 @@ class dfin_op(object):
     
     def coeff_power_series(self,order=10):
         """
-        Les coeffiecients de la serie formelle associé à self
+        Les coefficients de la serie formelle associée à self
         
         Exemple:
         
@@ -378,7 +378,7 @@ class dfin_op(object):
         
     def power_series(self,order=6):
         """
-        order: est un entier naturel qui represente l'ordre de developement de la serie entiere
+        order: est un entier naturel qui représente l'ordre de développement de la serie entiere
         Cette fonction retourne le developpement en serie  de l'equation differentielle self
         
         Exemple:
@@ -392,10 +392,10 @@ class dfin_op(object):
     
     def PolyToDiff(self,P,n = 1,x = 0):
         """
-        P: est un polynome
+        P: est un polynême
         n: est l'ordre de l'equa diff à construire
-        x: est le point x0 surlequel on definira les conditions initiales
-        Cette fonction retourne la dfin_op associé au polynome  P au point x
+        x: est le point x0 sur lequel on définira les conditions initiales
+        Cette fonction retourne la dfin_op associée au polynome P au point x
         
         Exemple:
         
