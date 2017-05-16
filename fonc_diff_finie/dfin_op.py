@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 14 14:44:25 2017
-@author: HAKAM Sophia ,DJERRAB Mohamed, KANYAMIBWA Romaric
+@author: HAKAM Sophia, DJERRAB Mohamed, KANYAMIBWA Romaric
 """
 
 from ore_algebra import *
