@@ -255,7 +255,7 @@ class dfin_op(object):
         if(self.__x0!=other.get_x0()):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = dfin_op(z0,newlist,self.__x0)
-        return z
+        return z 
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
