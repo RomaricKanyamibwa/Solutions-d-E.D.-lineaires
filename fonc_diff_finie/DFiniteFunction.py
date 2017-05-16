@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 14 14:44:25 2017
-@author: HAKAM Sophia, DJERRAB Mohamed, KANYAMIBWA Romaric
+@author: HAKAM Sophia ,DJERRAB Mohamed, KANYAMIBWA Romaric
 """
 
-from ore_algebra import *
+#from ore_algebra import *
 from sage.rings.integer_ring import ZZ
-from sage.functions.other import *
-from sage.all import *
+#from sage.functions.other import *
+#from sage.all import *
 from ore_algebra.ore_operator import OreOperator, UnivariateOreOperator
 from sage.rings.polynomial.polynomial_element import Polynomial
 from sage.rings.fraction_field_element import FractionFieldElement #Espace de Fonction rationelle
 from sage.rings.rational_field import QQ
 from sage.calculus.functional import derivative
+from sage.rings.fraction_field import FractionField
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from ore_algebra.ore_algebra import OreAlgebra
+from copy import copy
 
-K = FractionField(PolynomialRing(QQ, 'x')) #utiliser pour faire le polynome P(x,g(x)) de la composition
-A = OreAlgebra(QQ['x'], 'Dx')
+#K = FractionField(PolynomialRing(QQ,'x')) #utiliser pour faire le polynome P(x,g(x)) de la composition
+#A = OreAlgebra(QQ['x'], 'Dx')
 
 
 def calc_sum_func(L,CI,x):
@@ -38,34 +42,36 @@ def calc_sum_func(L,CI,x):
 
 def calc_init_con(diff_eq,n):
     """
-    -diff_eq est une variable de type dfin_op 
+    -diff_eq est une variable de type DFiniteFunction 
     -n est un entier
-    Cette fonction calcule les n premières conditions initiales de diff_eq
+    Cette function calcule les n premiers conditions initiales de diff_eq
     
     Exemple:
     
     sage: from ore_algebra import *;
-    sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
+    sage: from  DFiniteFunction import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
     sage: diff_eq= Dx^2+16
-    sage: cos4t=dfin_op(diff_eq,[1,0])
+    sage: cos4t=DFiniteFunction(diff_eq,[1,0])
     sage: calc_init_con(cos4t,5)
     [1, 0, -16, 0, 256, 0]
     
     """
+    op=(diff_eq.get_diff_eq().parent().gen())
     if(isinstance(diff_eq.get_diff_eq(),Polynomial)):
-        
+        op=(diff_eq.get_diff_eq().parent().gen())
+        A = OreAlgebra(QQ[str(op)], 'D'+str(op))
         L=diff_eq.coefficients()
         x0=diff_eq.get_x0()
         CI=[diff_eq.coefficients()[0](x0)]
         d=copy(diff_eq.get_diff_eq())
         order_d=0
         while(len(CI)-1<n):
-            d=A('Dx')*d
+            d=A(str())*d
             L=d.list()
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
-    if(not(isinstance(diff_eq,dfin_op)) and not(isinstance(n,int))):
-        raise TypeError,"Expected 2 aguments of type dfin_op and int type"
+    if(not(isinstance(diff_eq,DFiniteFunction)) and not(isinstance(n,int))):
+        raise TypeError,"Expected 2 aguments of type DFiniteFunction and int type"
     n=int(n)
     if(n<0):
         raise ValueError,"order is always a positive integer"
@@ -80,12 +86,47 @@ def calc_init_con(diff_eq,n):
         d=copy(diff_eq.get_diff_eq())
         order_d=d.order()
         while(d.order()!=n):
-            d=A('Dx')*d
+            d=op*d
             L=d.list()
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
 
-class dfin_op(object):
+    def PolyToDiff(self,P,n = 1,x = 0):
+        """
+        P: est un polynome
+        n: est l'ordre de l'equa diff à construire
+        x: est le point x0 surlequel on definira les conditions initiales
+        Cette fonction retourne la DFiniteFunction associé au polynome  P au point x
+        
+        Exemple:
+        
+        sage: P=3*x^4 - 6*x^3 + 5
+        sage: print cos4t.PolyToDiff(P)
+        (Dx - 12*x^3 + 18*x^2,[5])
+
+        """
+        op=P.parent().gen()
+        if(isinstance(P,Polynomial)):
+            h = copy(P)
+            L = [0]*n
+            for i in range(n):
+                L[i] = P(op)
+                tmp=P
+                P = P.derivative()
+                if(P==0):
+                    L=L[:i]
+                    n=i
+                    P=tmp
+                    break
+            h=P
+            ch = 'D'+str(op)+'^' + str(n)
+            z = A(ch) - h
+            return DFiniteFunction(z,L,x)
+        else:
+            raise TypeError,"A Polynomial function is expected as argument"
+
+    
+class DFiniteFunction(object):
 
     """Calcul formel sur des solutions d'équations
     différentielles linéaires
@@ -97,13 +138,13 @@ class dfin_op(object):
     Exemple:
     
     sage: from ore_algebra import *;
-    sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
+    sage: from  DFiniteFunction import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
     sage: diff_eq= Dx-4
-    sage: exp4t=dfin_op(diff_eq,[1])
+    sage: exp4t=DFiniteFunction(diff_eq,[1])
     
      ou
      
-    sage: exp4t=dfin_op(diff_eq,[1],0)
+    sage: exp4t=DFiniteFunction(diff_eq,[1],0)
         
     """
     
@@ -127,7 +168,7 @@ class dfin_op(object):
 
     def get_diff_eq(self):
         """
-        L'équation différentielle associée à self
+        L'equation differentiel associé à self
         """
         return self.__diff_eq
     
@@ -142,11 +183,11 @@ class dfin_op(object):
         
     def order(self):
         """
-        L'ordre de l'équation différentielle associée à self
+        L'ordre de l'equation differentiel associé à self
         
         Exemple:
         sage: diff_eq= Dx^7+16*x*Dx^4
-        sage: D=dfin_op(diff_eq,[1,0])
+        sage: D=DFiniteFunction(diff_eq,[1,0])
         sage: D.order()
         7
         """
@@ -156,11 +197,11 @@ class dfin_op(object):
 
     def degree(self):
         """
-        Retourne le degré du polynôme de plus grand degré
+        Retourne le degree du polynome de plus grand degree
         
         Exemple:
         sage: D=x*Dx+x^2
-        sage: D=dfin_op(D,[1])
+        sage: D=DFiniteFunction(D,[1])
         sage: D.degree()
         2
         """
@@ -168,11 +209,11 @@ class dfin_op(object):
 
     def print_eq(self):
         """
-        Fonction d'affichage de dfin_op
+        Fonction d'affichage de DFiniteFunction
         
         Exemple:
         sage: D=x*Dx+x^2
-        sage: D=dfin_op(D,[1])
+        sage: D=DFiniteFunction(D,[1])
         Dfinite equation:
         ('Initiale Conditions at x0=0:', [1])
         ('Equation:', x*Dx + x^2)
@@ -209,9 +250,9 @@ class dfin_op(object):
         """
         return not(self==other)
     
-    def get_dfin_op(self):
+    def get_DFiniteFunction(self):
         """
-        Un tuple avec l'équation differentielle et les conditions initiales
+        Un tuple avec l'equation differentiel et les conditions initiales
         """
         return (self.__diff_eq,self.__init_cond)
     
@@ -222,8 +263,8 @@ class dfin_op(object):
         
         Exemple:
         sage: from ore_algebra import *;
-        sage: from  dfin_op import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
-        sage: p=dfin_op(K,[0,1,1],0);
+        sage: from  DFiniteFunction import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
+        sage: p=DFiniteFunction(K,[0,1,1],0);
         sage: print p
         (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1])
         sage: p.coefficients()
@@ -240,7 +281,7 @@ class dfin_op(object):
             if(isinstance(z0,Polynomial)):
                 if(self.__x0!=other.get_x0()):
                     raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-                return dfin_op(z0,[],self.__x0)
+                return DFiniteFunction(z0,[],self.__x0)
         else:
             z1=-other.get_diff_eq()
             z0=self.__diff_eq.lclm(z1)
@@ -254,8 +295,8 @@ class dfin_op(object):
             i += 1
         if(self.__x0!=other.get_x0()):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-        z = dfin_op(z0,newlist,self.__x0)
-        return z 
+        z = DFiniteFunction(z0,newlist,self.__x0)
+        return z
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
@@ -264,7 +305,7 @@ class dfin_op(object):
             if(isinstance(z0,Polynomial)):
                 if(self.__x0!=other.get_x0()):
                     raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-                return dfin_op(z0,[],self.__x0)
+                return DFiniteFunction(z0,[],self.__x0)
         else:
             z0=self.__diff_eq.lclm(other.get_diff_eq())
         newlist =[]
@@ -277,7 +318,7 @@ class dfin_op(object):
             i += 1
         if(self.__x0!=other.get_x0()):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-        z = dfin_op(z0,newlist,self.__x0)
+        z = DFiniteFunction(z0,newlist,self.__x0)
         return z
 
 
@@ -288,7 +329,7 @@ class dfin_op(object):
             if(isinstance(z0,Polynomial)):
                 if(self.__x0!=other.get_x0()):
                     raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-                return dfin_op(z0,[],self.__x0)
+                return DFiniteFunction(z0,[],self.__x0)
         else:
             z0=self.__diff_eq.symmetric_product(other.get_diff_eq())
         newlist =[]
@@ -301,12 +342,12 @@ class dfin_op(object):
             i += 1
         if(self.__x0!=other.get_x0()):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-        z = dfin_op(z0,newlist,self.__x0)
+        z = DFiniteFunction(z0,newlist,self.__x0)
         return z
     
     def get_derivative(self):
         """
-        Cette fonction calcule le dfin_op associé à la dérivée self
+        Cette fonction calcule le DFiniteFunction associé à la derive self
         
         Exemple:
         sage: print p
@@ -314,20 +355,21 @@ class dfin_op(object):
         sage: print p.get_derivative()
             (1/64*x^2*Dx^4 + (-2*x^2 + 33/32*x + 7)*Dx^3 + (-x^2 - 3*x - 1/2)*Dx^2 + (34/3*x^2 - 2*x - 6)*Dx + 68/3*x,[0, 1, 1, -11/2])
         """
+        op=(self.__diff_eq.parent().gen())
         tmp_diff=self.__diff_eq
         tmp_IC=self.__init_cond
-        tmp_diff=A('Dx')*tmp_diff
+        tmp_diff=op*tmp_diff
         n=tmp_diff.order()
         tmp_IC=calc_init_con(self,n-1)
-        return dfin_op(tmp_diff,tmp_IC,self.__x0)
+        return DFiniteFunction(tmp_diff,tmp_IC,self.__x0)
     
     def composition(self,g):
         """
         Fonction qui retourne la composition de diff_op avec f (fog)
-        Pour l'instant, la fonction retourne la composition qu'en forme d'une équation différentielle et non comme un dfin_op
+        Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme une DFiniteFunction
         
         Exemple:
-        sage: cos4t=dfin_op(Dx^2+4,[1,0])
+        sage: cos4t=DFiniteFunction(Dx^2+4,[1,0])
         sage: cos4t.composition(x^2)
             ('Fraction Field', x^2)
             P(x,g)= 0
@@ -336,16 +378,18 @@ class dfin_op(object):
         """
         
         if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
-            print("Fraction Field",g)
+            print("Fraction Field:",g)
+            
             x, y = QQ['x','y'].gens()
             P=g(x)-y
-            print "P(x,g)=",P(x,g)
-            if(P(x,g)==0):
+            print "P(x,g)=",P(x,g(x))
+            if(P(x,g(x))==0):
                 d=self.__diff_eq.annihilator_of_composition(g)
                 print "Composition:",d
+                return d
             else:
                 print "The Result is not a Dfinite function"
-            return d
+            raise TypeError,"The Result is not a Dfinite function"
             
         else:
             raise TypeError,"A Polynomial or a Rational function is expected as argument"
@@ -353,7 +397,7 @@ class dfin_op(object):
     
     def coeff_power_series(self,order=10):
         """
-        Les coefficients de la serie formelle associée à self
+        Les coeffiecients de la serie formelle associé à self
         
         Exemple:
         
@@ -378,7 +422,7 @@ class dfin_op(object):
         
     def power_series(self,order=6):
         """
-        order: est un entier naturel qui représente l'ordre de développement de la serie entiere
+        order: est un entier naturel qui represente l'ordre de developement de la serie entiere
         Cette fonction retourne le developpement en serie  de l'equation differentielle self
         
         Exemple:
@@ -386,43 +430,23 @@ class dfin_op(object):
         sage: cos4t.power_series(10)
         512/315*x^8 - 256/45*x^6 + 32/3*x^4 - 8*x^2 + 1
         """
-        L=self.coeff_power_series(order)
-        
+        diff_eq=self.__diff_eq
+        CI=calc_init_con(self,order-1)
+        L=[0]*order
+        if(self.__x0==0):
+            L[0]=CI[0]
+            f=1
+            for i in range(1,order):
+                f=f*i
+                L[i]=CI[i]/f
+            return L
+        else:
+            an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle 
+            an_order=an.order()
+            L=an.to_list(CI,order)
+        K = FractionField(PolynomialRing(QQ,'x')) #utiliser pour faire le polynome P(x,g(x)) de la composition
         return K(L)
     
-    def PolyToDiff(self,P,n = 1,x = 0):
-        """
-        P: est un polynôme
-        n: est l'ordre de l'equa diff à construire
-        x: est le point x0 sur lequel on définira les conditions initiales
-        Cette fonction retourne la dfin_op associée au polynome P au point x
-        
-        Exemple:
-        
-        sage: P=3*x^4 - 6*x^3 + 5
-        sage: print cos4t.PolyToDiff(P)
-        (Dx - 12*x^3 + 18*x^2,[5])
-
-        """
-        if(isinstance(P,Polynomial)):
-            h = copy(P)
-            L = [0]*n
-            for i in range(n):
-                L[i] = P(x)
-                tmp=P
-                P = P.derivative()
-                if(P==0):
-                    L=L[:i]
-                    n=i
-                    P=tmp
-                    break
-            h=P
-            ch = 'Dx^' + str(n)
-            z = A(ch) - h
-            return dfin_op(z,L,x)
-        else:
-            raise TypeError,"A Polynomial function is expected as argument"
-
 
         
         
