@@ -1,7 +1,7 @@
 K = FractionField(PolynomialRing(QQ, 'y'))
 PolQ=K.random_element()
 k=DFiniteFunction(Dy-1,[1])
-k.get_diff_eq().annihilator_of_composition(y^3)
+k.annihilator().annihilator_of_composition(y^3)
 Dy - 3*y^2
 isinstance(PolQ,type(k))
 type(PolQ)

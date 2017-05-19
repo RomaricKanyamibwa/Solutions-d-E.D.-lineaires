@@ -47,14 +47,14 @@ print "Compl coef:",L
 print 'S eq'
 print "Dif eq:",s
 L=s.coefficients()
-print "Coef:",s.get_diff_eq().coefficients()
+print "Coef:",s.annihilator().coefficients()
 print "Compl coef:",L
 
 print('-------------------------------------------------------------------------')
 print("Test of calc_init_cond on 3*exp(3t)")
 print('-------------------------------------------------------------------------')
 exp3t=DFiniteFunction(Dy-3,[1])
-print "Dif eq:exp3t=",exp3t.get_diff_eq()
+print "Dif eq:exp3t=",exp3t.annihilator()
 n=4
 IC=calc_init_con(exp3t,n)
 print "Initial condition for n=",n,":",IC
