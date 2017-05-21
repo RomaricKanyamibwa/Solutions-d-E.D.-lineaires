@@ -15,6 +15,8 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from ore_algebra.ore_algebra import OreAlgebra
 from sage.rings.rational import Rational
 from sage.rings.integer import Integer
+from sage.arith.all import binomial
+#from sage.arith.misc import binomial
 from copy import copy
 
 def isDFiniteFunction(D):
@@ -61,7 +63,7 @@ def calc_init_con(diff_eq,n):
     op=(diff_eq.annihilator().parent().gen())
     if(isinstance(diff_eq.annihilator(),Polynomial)):
         op=(diff_eq.annihilator().parent().gen())
-        A = OreAlgebra(QQ[str(op)], 'D'+str(op))
+        A = OreAlgebra(op.base_ring()[str(op)], 'D'+str(op))
         L=diff_eq.coefficients()
         x0=diff_eq.get_x0()
         CI=[diff_eq.coefficients()[0](x0)]
@@ -125,12 +127,30 @@ def PolyToDiff(Poly,n = 1,x=0):
         euclid=(Poly).quo_rem(h) # division euclidienne de Poly avec h
         SavePoly=euclid[0]+euclid[1]/(h)
         ch = 'D'+str(op)+'^' + str(n)
-        A = OreAlgebra(QQ[op],'D'+str(op))
+        A = OreAlgebra(op.base_ring()[op],'D'+str(op))
         z = SavePoly*A(ch) - 1
         return DFiniteFunction(z,L,x)
     else:
         raise TypeError("A Polynomial function is expected as argument")
 
+def Leibniz_Product_rule(f,g,n):
+    """
+    Input:
+    -f est une liste de valeurs de taille au moins n 
+    -g est une liste de valeurs de taille au moins n
+    -n est un entier
+    Output:
+    -A la sortie cette fonction envoi le produit de Leibniz de la fonction Dx^n(f*g) dans un point x0
+    """
+    if(len(f)>n and len(g)>n):
+        Leibniz_sum=0
+        for k in range(n+1):
+            #print("binomial(n+1,k)*f[n+1-k]*g[k]=",binomial(n,k)*f[n-k]*g[k])
+            Leibniz_sum=Leibniz_sum+binomial(n,k)*f[n-k]*g[k]
+        return Leibniz_sum
+    else:
+        raise TypeError("Incompatible list length,the list f and g must have at list n elements")
+        
     
 class DFiniteFunction(object):
 
@@ -344,7 +364,7 @@ class DFiniteFunction(object):
         L1=calc_init_con(self,n-1)
         L2=calc_init_con(other,n-1)
         i=0
-        newlist = [L1[i] * L2[i] for i in range(n)]
+        newlist = [Leibniz_Product_rule(L1[:i+1],L2[:i+1],i) for i in range(n)]
         if(self.__x0!=other.get_x0()):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = DFiniteFunction(z0,newlist,self.__x0)
