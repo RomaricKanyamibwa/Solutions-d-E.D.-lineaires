@@ -21,7 +21,7 @@ def isDFiniteFunction(D):
     """
     Verifie si D est une DFiniteFunction
     """
-    return  isinstance(p,DFiniteFunction)
+    return  isinstance(D,DFiniteFunction)
     
     
 def calc_sum_func(L,CI,x):
@@ -93,9 +93,9 @@ def calc_init_con(diff_eq,n):
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
 
-def PolyToDiff(P,n = 1,x=0):
+def PolyToDiff(Poly,n = 1,x=0):
     """
-    P: est un polynome
+    Poly: est un polynome
     n: est l'ordre de l'equa diff à construire
     x: est le point x0 surlequel on definira les conditions initiales
     Cette fonction retourne la DFiniteFunction associé au polynome  P au point x
@@ -107,8 +107,9 @@ def PolyToDiff(P,n = 1,x=0):
     (Dx - 12*x^3 + 18*x^2,[5])
 
     """
+    P=copy(Poly)
     op=P.parent().gen()
-    if(isinstance(P,Polynomial)):
+    if(isinstance(P,Polynomial) or isinstance(P,FractionFieldElement)):
         h = copy(P)
         L = [0]*n
         for i in range(n):
@@ -121,12 +122,14 @@ def PolyToDiff(P,n = 1,x=0):
                 P=tmp
                 break
         h=P
+        euclid=(Poly).quo_rem(h) # division euclidienne de Poly avec h
+        SavePoly=euclid[0]+euclid[1]/(h)
         ch = 'D'+str(op)+'^' + str(n)
         A = OreAlgebra(QQ[op],'D'+str(op))
-        z = A(ch) - h
+        z = SavePoly*A(ch) - 1
         return DFiniteFunction(z,L,x)
     else:
-        raise TypeError,"A Polynomial function is expected as argument"
+        raise TypeError("A Polynomial function is expected as argument")
 
     
 class DFiniteFunction(object):
@@ -154,7 +157,7 @@ class DFiniteFunction(object):
         self.__diff_eq = diff_eq
         self.__x0=x0
         if(isinstance(diff_eq,UnivariateOreOperator)):
-            if(len(init_cond)>=diff_eq.order()):#raise an error if diff_eq est une fonction
+            if(len(init_cond)>=diff_eq.order()):
                 self.__init_cond=init_cond
             else:
                 raise ValueError,"not enough initial values."
@@ -225,7 +228,7 @@ class DFiniteFunction(object):
         print ("Equation:",self.__diff_eq)
         
     def __repr__(self):
-        ch="("+str(self.__diff_eq)+","+str(self.__init_cond)+")"
+        ch="DFiniteFunction("+str(self.__diff_eq)+","+str(self.__init_cond)+")"
         return str(ch)
         
     def __eq__(self,other):
@@ -275,9 +278,7 @@ class DFiniteFunction(object):
         newlist =[]
         n=self.order()
         i=0
-        while(i< n):
-            newlist.append( -self.__init_cond[i])
-            i += 1
+        newlist = [-self.__init_cond[i] for i in range(n)]
         z = DFiniteFunction(z0,newlist,self.__x0)
         return z
         
@@ -386,7 +387,7 @@ class DFiniteFunction(object):
             
             x, y = QQ['x','y'].gens()
             P=g(x)-y
-            print "P(x,g)=",P(x,g(x))
+            #print "P(x,g)=",P(x,g(x))
             if(P(x,g(x))==0):
                 d=self.__diff_eq.annihilator_of_composition(g)
                 #print "Composition:",d
@@ -419,10 +420,10 @@ class DFiniteFunction(object):
                 f=f*i
                 L[i]=CI[i]/f
         else:
-            an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle 
+            an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle
             an_order=an.order()
             L=an.to_list(CI,order)
-        K = FractionField(PolynomialRing(QQ,'x',order='negdeglex')) #utiliser pour faire le polynome P(x,g(x)) de la composition
+        K = FractionField(PolynomialRing(QQ,'x', order='neglex'))
         return K(L)
     
 
