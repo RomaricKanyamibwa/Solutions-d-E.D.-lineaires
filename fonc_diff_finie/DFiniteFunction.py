@@ -16,7 +16,6 @@ from ore_algebra.ore_algebra import OreAlgebra
 from sage.rings.rational import Rational
 from sage.rings.integer import Integer
 from sage.arith.all import binomial
-#from sage.arith.misc import binomial
 from copy import copy
 
 def isDFiniteFunction(D):
@@ -34,7 +33,7 @@ def calc_sum_func(L,CI,x):
     Cette fonction calcule H(x0)=-(f1(x0)*g1(x0)+f2(x0)*g2(x0)+ . . . . . +fn(x0)*gn(x0))
     """
     if(len(L)<len(CI)+1):
-        raise ValueError,"Incompatible length of L and CI .CI and L must have a length difference of 1"
+        raise ValueError("Incompatible length of L and CI .CI and L must have a length difference of 1")
     t=0
     for i in range(len(L)-1):
         if(isinstance( L[i], ( int, long,float,complex,Integer,Rational ) )):
@@ -75,10 +74,10 @@ def calc_init_con(diff_eq,n):
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
     if(not(isinstance(diff_eq,DFiniteFunction)) and not(isinstance(n,int))):
-        raise TypeError,"Expected 2 aguments of type DFiniteFunction and int type"
+        raise TypeError("Expected 2 aguments of type DFiniteFunction and int type")
     n=int(n)
     if(n<0):
-        raise ValueError,"order is always a positive integer"
+        raise ValueError("order must always be a positive integer")
     length_IC=len(diff_eq.get_init_cond())
     if(length_IC>n):
         return diff_eq.get_init_cond()[:n+1]
@@ -128,7 +127,7 @@ def PolyToDiff(Poly,n = 1,x=0):
         SavePoly=euclid[0]+euclid[1]/(h)
         ch = 'D'+str(op)+'^' + str(n)
         A = OreAlgebra(op.base_ring()[op],'D'+str(op))
-        z = SavePoly*A(ch) - 1
+        z = SavePoly.denominator()*(SavePoly*A(ch) - 1)
         return DFiniteFunction(z,L,x)
     else:
         raise TypeError("A Polynomial function is expected as argument")
@@ -154,10 +153,16 @@ def Leibniz_Product_rule(f,g,n):
     
 class DFiniteFunction(object):
 
-    """Calcul formel sur des solutions d'équations différentielles linéaires
+    """
+        INPUT:
+        Calcul formel sur des solutions d'équations différentielles linéaires
         -diff_eq est une equation differentielle de type 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'
         -init_cond est une liste de conditions initiales
         -et x0 (optionel) est le point sur lequel on definit les conditions initiales
+        
+        OUTPUT:
+        -A DFiniteFunction
+        
         
         
     Exemple:
@@ -173,23 +178,25 @@ class DFiniteFunction(object):
         
     """
     
-    def __init__(self,diff_eq,init_cond=[],x0=0):
+    def __init__(self,diff_eq,init_cond=[],x0=0):#constructeur de la classe DFiniteFucntion
         self.__diff_eq = diff_eq
         self.__x0=x0
+        #Avant de construire la DFiniteFunction on verifie que le coefficient dominant ne s'annule pas en x0
+        if(isinstance(diff_eq.coefficients()[-1],Polynomial)):
+            if(diff_eq.coefficients()[-1](x0)==0):
+                raise ValueError("Forbiden value, x0="+str(x0)+" is a singular point")
         if(isinstance(diff_eq,UnivariateOreOperator)):
-            if(len(init_cond)>=diff_eq.order()):
+            if(len(init_cond)>=diff_eq.order()):#on souleve une exception si les Condition initiales ne suffisent pas pour decrire la fonction
                 self.__init_cond=init_cond
             else:
-                raise ValueError,"not enough initial values."
+                raise ValueError("Not enough initial values.")
         elif isinstance(diff_eq,Polynomial):
-            self.__diff_eq = diff_eq
+            Pol_eq=PolyToDiff(diff_eq,1,x0)
+            self.__diff_eq = Pol_eq.annihilator()
             self.__x0=x0
-            if(init_cond!=[]):
-                if diff_eq(x0)!=init_cond[0]:
-                    raise ValueError,"Initial conditions incompatible with entered function"
-            self.__init_cond=[]
+            self.__init_cond=Pol_eq.get_init_cond()
         else:
-            raise TypeError,"Incompatible type: expected diff_eq of Polynomial or UnivariateOreOperator type"
+            raise TypeError("Incompatible type: expected a Polynomial or UnivariateOreOperator type")
 
     def annihilator(self):
         """
@@ -243,7 +250,7 @@ class DFiniteFunction(object):
         ('Initiale Conditions at x0=0:', [1])
         ('Equation:', x*Dx + x^2)
         """
-        print ("Dfinite equation:")
+        print ("D-Finite function:")
         print ("Initiale Conditions at x0="+str(self.__x0)+":",self.__init_cond)
         print ("Equation:",self.__diff_eq)
         
@@ -254,7 +261,9 @@ class DFiniteFunction(object):
     def __eq__(self,other):
         """
         Tests whether or not 2 functions are equal or not 
-        """ 
+        """
+        if(self.__x0!=other.__x0):
+            raise NotImplementedError("Cannot yet compare D-Finite Functions defined in different Points")
         if self.__diff_eq==other.annihilator() and self.__init_cond==other.get_init_cond():
             return True
         length=min(len(self.__init_cond),len(other.get_init_cond()))
@@ -310,7 +319,9 @@ class DFiniteFunction(object):
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
-        
+        if(self.__x0!=other.get_x0()):
+            raise ValueError("Incompatible initial condition, the initial conditions must be defined on the same point x0")
+            
         if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )): #or isinstance(other,Polynomial)):
             L=copy(self.__init_cond)
             if( not L):
@@ -324,7 +335,7 @@ class DFiniteFunction(object):
             return self+pol_D
         
         if(not(isinstance(self,DFiniteFunction))):
-            raise TypeError,"Incompatible type:"+str(type(self))
+            raise TypeError("Incompatible type:"+str(type(self)))
             
         if(not(isinstance(other,DFiniteFunction))):
             raise TypeError,"Incompatible type:"+str(type(other))
@@ -332,8 +343,6 @@ class DFiniteFunction(object):
         if(isinstance(self.__diff_eq,Polynomial)or isinstance(other.__diff_eq,Polynomial)):
             z0=self.__diff_eq+other.annihilator()
             if(isinstance(z0,Polynomial)):
-                if(self.__x0!=other.get_x0()):
-                    raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
                 return DFiniteFunction(z0,[],self.__x0)
         else:
             z0=self.__diff_eq.lclm(other.annihilator())
@@ -343,8 +352,6 @@ class DFiniteFunction(object):
         L2=calc_init_con(other,n-1)
         i=0
         newlist = [L1[i] + L2[i] for i in range(n)]
-        if(self.__x0!=other.get_x0()):
-            raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = DFiniteFunction(z0,newlist,self.__x0)
         return z
 
@@ -431,6 +438,7 @@ class DFiniteFunction(object):
         512/315*x^8 - 256/45*x^6 + 32/3*x^4 - 8*x^2 + 1
         """
         diff_eq=self.__diff_eq
+        op=diff_eq.base_ring()
         CI=calc_init_con(self,order-1)
         L=[0]*order
         if(self.__x0==0):
@@ -443,8 +451,8 @@ class DFiniteFunction(object):
             an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle
             an_order=an.order()
             L=an.to_list(CI,order)
-        K = FractionField(PolynomialRing(QQ,'x', order='neglex'))
-        return K(L)
+        #K = FractionField(PolynomialRing(QQ,str(op), order='neglex'))
+        return op(L)
     
 
         
