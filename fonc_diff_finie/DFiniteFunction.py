@@ -41,11 +41,16 @@ def calc_sum_func(L,CI,x):
         else:
             l=L[i](x)
         t+=CI[i]*l
+        
+    if(not(isinstance( L[-1], ( int, long,float,complex,Integer,Rational ) ))):
+        t=t/L[-1](x)
+    else:
+        t=t/L[-1]
     return -t
 
-def calc_init_con(diff_eq,n):
+def calc_init_con(DFin_func,n):
     """
-    -diff_eq est une variable de type DFiniteFunction 
+    -DFin_func est une variable une DFiniteFunction 
     -n est un entier
     Cette function calcule les n premiers conditions initiales de diff_eq
     
@@ -59,34 +64,34 @@ def calc_init_con(diff_eq,n):
     [1, 0, -16, 0, 256, 0]
     
     """
-    op=(diff_eq.annihilator().parent().gen())
-    if(isinstance(diff_eq.annihilator(),Polynomial)):
-        op=(diff_eq.annihilator().parent().gen())
+    op=(DFin_func.annihilator().parent().gen())
+    if(isinstance(DFin_func.annihilator(),Polynomial)):
+        op=(DFin_func.annihilator().parent().gen())
         A = OreAlgebra(op.base_ring()[str(op)], 'D'+str(op))
-        L=diff_eq.coefficients()
-        x0=diff_eq.get_x0()
-        CI=[diff_eq.coefficients()[0](x0)]
-        d=copy(diff_eq.annihilator())
+        L=DFin_func.coefficients()
+        x0=DFin_func.get_x0()
+        CI=[DFin_func.coefficients()[0](x0)]
+        d=copy(DFin_func.annihilator())
         order_d=0
         while(len(CI)-1<n):
             d=A(str())*d
             L=d.list()
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
-    if(not(isinstance(diff_eq,DFiniteFunction)) and not(isinstance(n,int))):
+    if(not(isinstance(DFin_func,DFiniteFunction)) and not(isinstance(n,int))):
         raise TypeError("Expected 2 aguments of type DFiniteFunction and int type")
     n=int(n)
     if(n<0):
         raise ValueError("order must always be a positive integer")
-    length_IC=len(diff_eq.get_init_cond())
+    length_IC=len(DFin_func.get_init_cond())
     if(length_IC>n):
-        return diff_eq.get_init_cond()[:n+1]
+        return DFin_func.get_init_cond()[:n+1]
     else:
-        CI=diff_eq.get_init_cond()
-        L=diff_eq.coefficients()
-        x0=diff_eq.get_x0()
+        CI=DFin_func.get_init_cond()
+        L=DFin_func.coefficients()
+        x0=DFin_func.get_x0()
         CI=CI+[calc_sum_func(L,CI,x0)]
-        d=copy(diff_eq.annihilator())
+        d=copy(DFin_func.annihilator())
         order_d=d.order()
         while(d.order()!=n):
             d=op*d
@@ -104,8 +109,8 @@ def PolyToDiff(Poly,n = 1,x=0):
     Exemple:
 
     sage: P=3*x^4 - 6*x^3 + 5
-    sage: print cos4t.PolyToDiff(P)
-    (Dx - 12*x^3 + 18*x^2,[5])
+    sage: PolyToDiff(P)
+    DFiniteFunction((3*y^4 - 6*y^3 + 5)*Dy - 12*y^3 + 18*y^2,[5])
 
     """
     P=copy(Poly)
@@ -148,7 +153,7 @@ def Leibniz_Product_rule(f,g,n):
             Leibniz_sum=Leibniz_sum+binomial(n,k)*f[n-k]*g[k]
         return Leibniz_sum
     else:
-        raise TypeError("Incompatible list length,the list f and g must have at list n elements")
+        raise TypeError("Incompatible list length,the list f and g must have at least n elements")
         
     
 class DFiniteFunction(object):
@@ -190,13 +195,14 @@ class DFiniteFunction(object):
                 self.__init_cond=init_cond
             else:
                 raise ValueError("Not enough initial values.")
-        elif isinstance(diff_eq,Polynomial):
-            Pol_eq=PolyToDiff(diff_eq,1,x0)
-            self.__diff_eq = Pol_eq.annihilator()
-            self.__x0=x0
-            self.__init_cond=Pol_eq.get_init_cond()
         else:
-            raise TypeError("Incompatible type: expected a Polynomial or UnivariateOreOperator type")
+            raise TypeError("Incompatible type: expected a UnivariateOreOperator type")
+            
+    def toDFiniteFunction(self,elmnt,x0=0):
+        if isinstance(elmnt,Polynomial):
+            return PolyToDiff(elmnt,1,x0)
+        else:
+            raise TypeError("Incompatible type: expected a Polynomial type")
 
     def annihilator(self):
         """
@@ -357,7 +363,11 @@ class DFiniteFunction(object):
 
 
     def __mul__(self,other):
-        """Multiplication de 2 equa diff"""
+        """Multiplication de 2 equa diff
+        sage:cos4t=DFiniteFunction(Dy^2+16,[1,0])
+        sage: cos4t*cos4t*cos4t
+        DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
+        """
         if(isinstance(self.__diff_eq,Polynomial) or isinstance(other.__diff_eq,Polynomial)):
             z0=self.__diff_eq*other.annihilator()
             if(isinstance(z0,Polynomial)):
@@ -376,6 +386,27 @@ class DFiniteFunction(object):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = DFiniteFunction(z0,newlist,self.__x0)
         return z
+    
+    def __pow__(self,n):
+        """
+        sage:cos4t=DFiniteFunction(Dy^2+16,[1,0])
+        sage: cos4t^3
+        DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
+        """
+        res=self.__diff_eq.symmetric_power(n)
+        order=res.order()
+        power_series=self.power_series(order)
+        power_series_n=power_series**n
+        coeff_power_series_n=power_series_n.coefficients(sparse=False)
+        Init_Cond=[0]*order
+        f=1
+        Init_Cond[0]=coeff_power_series_n[0]
+        for i in range(1,order):
+            f=f*i
+            Init_Cond[i]=coeff_power_series_n[i]*f
+            
+        return DFiniteFunction(self.__diff_eq.symmetric_power(n),Init_Cond,self.__x0)
+    
     
     def derivative(self):
         """
@@ -421,8 +452,7 @@ class DFiniteFunction(object):
                 return d
             else:
                 #print "The Result is not a Dfinite function"
-                #raise NotImplementedError
-                raise TypeError("The Result is not a Dfinite function")
+                raise NotImplementedError("The Result is not a Dfinite function")
             
         else:
             raise TypeError("A Polynomial or a Rational function is expected as argument")
@@ -439,7 +469,7 @@ class DFiniteFunction(object):
         """
         diff_eq=self.__diff_eq
         op=diff_eq.base_ring()
-        CI=calc_init_con(self,order-1)
+        CI=calc_init_con(self,order)
         L=[0]*order
         if(self.__x0==0):
             L[0]=CI[0]
