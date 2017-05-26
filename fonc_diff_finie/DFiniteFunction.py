@@ -27,9 +27,11 @@ def isDFiniteFunction(D):
     
 def calc_sum_func(L,CI,x):
     """
+    INPUT:
     -L est une liste fonctions L=[f1,f2,. . . . ,fn]
     -CI est une liste de nombres(Condition initiales au point x) CI=[g1(x0),g2(x0), . . . . . ,gn(x0)]
     -x is an x0 point at which we evaluate the functions in L
+    OUTPUT:
     Cette fonction calcule H(x0)=-(f1(x0)*g1(x0)+f2(x0)*g2(x0)+ . . . . . +fn(x0)*gn(x0))
     """
     if(len(L)<len(CI)+1):
@@ -198,9 +200,19 @@ class DFiniteFunction(object):
         else:
             raise TypeError("Incompatible type: expected a UnivariateOreOperator type")
             
-    def toDFiniteFunction(self,elmnt,x0=0):
-        if isinstance(elmnt,Polynomial):
-            return PolyToDiff(elmnt,1,x0)
+    def toDFiniteFunction(self,func,x0=0):
+        """
+        INPUT:
+        -func est une fonction de classe C infini ou au moins une fonction de classe C 1
+        
+        OUTPUT:
+        -cette methode retourne la DFiniteFunction associé à func s'elle existe
+        (Pour l'instant cette methode marche que pour des polynomes mais dans une future
+        implementation on peut essayer de tranformer d'autres fonction en DFiniteFunction comme les
+        log(1+x),sinx,cosx,tanx,1/(1-x),. . .   qu'on sait qu'il sont developpable en serie entiere)
+        """
+        if isinstance(func,Polynomial):
+            return PolyToDiff(func,1,x0)
         else:
             raise TypeError("Incompatible type: expected a Polynomial type")
 
@@ -368,6 +380,8 @@ class DFiniteFunction(object):
         sage: cos4t*cos4t*cos4t
         DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
         """
+        if(self.__x0!=other.get_x0()):
+            raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         if(isinstance(self.__diff_eq,Polynomial) or isinstance(other.__diff_eq,Polynomial)):
             z0=self.__diff_eq*other.annihilator()
             if(isinstance(z0,Polynomial)):
@@ -382,8 +396,6 @@ class DFiniteFunction(object):
         L2=calc_init_con(other,n-1)
         i=0
         newlist = [Leibniz_Product_rule(L1[:i+1],L2[:i+1],i) for i in range(n)]
-        if(self.__x0!=other.get_x0()):
-            raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         z = DFiniteFunction(z0,newlist,self.__x0)
         return z
     
@@ -485,5 +497,5 @@ class DFiniteFunction(object):
         return op(L)
     
 
-        
-        
+      
+ 
