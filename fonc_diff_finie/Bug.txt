@@ -1,0 +1,6 @@
+sage: PD=PolyToDiff(y^5+y^2-5,2)
+sage: pd=PD.annihilator()
+sage: pd.power_series_solutions(6)
+[y - 1/15*y^3 - 1/375*y^5 + O(y^6), 1 - 1/5*y^2 - 1/5*y^5 + O(y^6)]
+sage: PD.power_series(6)
+93160*y^5 - 5624*y^4 + 436*y^3 - 66*y^2 + 7*y - 3
