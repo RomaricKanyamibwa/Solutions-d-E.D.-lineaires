@@ -69,10 +69,11 @@ def calc_sum_func(L,CI,x):
         t=t/L[-1]
     return -t
 
-def calculate_initial_conditions(DFin_func,n):
+def calculate_initial_conditions(DFin_func,n,x=0):
     """
-    -DFin_func est une variable une DFiniteFunction 
+    -DFin_func est une variable de type DFiniteFunction ou un polynome ou une fraction rationnelle
     -n est un entier
+    -X (optionel) le point d'evaluation si DFinFunc est un polynome
     Cette function calcule les n premiers conditions initiales de diff_eq
     
     Exemple:
@@ -85,25 +86,16 @@ def calculate_initial_conditions(DFin_func,n):
     [1, 0, -16, 0, 256, 0]
     
     """
+    if(isinstance(DFin_func,Polynomial) or isinstance(DFin_func,FractionFieldElement)):
+        tmpDFin_func=PolyToDiff(DFin_func,1,x)
+        return calculate_initial_conditions(tmpDFin_func,n)
+    
     op=(DFin_func.annihilator().parent().gen())
-    if(isinstance(DFin_func.annihilator(),Polynomial)):
-        op=(DFin_func.annihilator().parent().gen())
-        A = OreAlgebra(op.base_ring()[str(op)], 'D'+str(op))
-        L=DFin_func.coefficients()
-        x0=DFin_func.initial_conditions()[0]
-        CI=[DFin_func.coefficients()[0](x0)]
-        d=copy(DFin_func.annihilator())
-        order_d=0
-        while(len(CI)-1<n):
-            d=A(str())*d
-            L=d.list()
-            CI=CI+[calc_sum_func(L,CI,x0)]
-        return CI
-    if(not(isinstance(DFin_func,DFiniteFunction)) and not(isinstance(n,int))):
-        raise TypeError("Expected 2 aguments of type DFiniteFunction and int type")
+    if(not(isinstance(DFin_func,DFiniteFunction))):
+        raise TypeError("Expected a DFiniteFunction or polynomial argument and not a "+str(type(DFin_func)))
     n=int(n)
-    if(n<0):
-        raise ValueError("order must always be a positive integer")
+    if(n<0 or not(isinstance(n,int))):
+        raise ValueError("order n must always be a positive integer")
     length_IC=len(DFin_func.initial_conditions()[1])
     if(length_IC>n):
         return DFin_func.initial_conditions()[1][:n+1]
@@ -154,6 +146,8 @@ def PolyToDiff(Poly,n = 1,x=0):
         ch = 'D'+str(op)+'^' + str(n)
         A = OreAlgebra(op.base_ring()[op],'D'+str(op))
         z = SavePoly.denominator()*(SavePoly*A(ch) - 1)
+        if(z.coefficients()[-1](x)==0):
+            raise ValueError("Forbiden value, x0="+str(x)+" is a singular point")
         return DFiniteFunction(z,L,x)
     else:
         raise TypeError("A Polynomial function is expected as argument")
@@ -274,7 +268,7 @@ class DFiniteFunction(object):
         """
         return self.__diff_eq.degree()
 
-    def print_eq(self):
+    def print_DFiniteFunction(self):
         """
         Fonction d'affichage de DFiniteFunction
         
@@ -355,31 +349,21 @@ class DFiniteFunction(object):
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
-        if(self.__x0!=other.initial_conditions()[0]):
-            raise ValueError("Incompatible initial condition, the initial conditions must be defined on the same point x0")
-            
-        if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )): #or isinstance(other,Polynomial)):
+        if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )):
             L=copy(self.__initial_conditions)
-            if( not L):
-                L=[other]
-            else:
-                L[0]=other+self.__initial_conditions[0]
-            return DFiniteFunction(self.__diff_eq+other,L,self.__x0)
+            L[0]=other+self.__initial_conditions[0]
+            return DFiniteFunction(self.__diff_eq,L,self.__x0)
         
         if(isinstance(other,Polynomial)):
-            pol_D=DFiniteFunction(other,[],self.__x0)
+            pol_D=PolyToDiff(other,1,self.__x0)
             return self+pol_D
-        
-        if(not(isinstance(self,DFiniteFunction))):
-            raise TypeError("Incompatible type:"+str(type(self)))
-            
+
         if(not(isinstance(other,DFiniteFunction))):
             raise TypeError,"Incompatible type:"+str(type(other))
             
-        if(isinstance(self.__diff_eq,Polynomial)or isinstance(other.__diff_eq,Polynomial)):
-            z0=self.__diff_eq+other.annihilator()
-            if(isinstance(z0,Polynomial)):
-                return DFiniteFunction(z0,[],self.__x0)
+        if(self.__x0!=other.initial_conditions()[0]):
+            raise ValueError("Incompatible initial condition, the initial conditions must be defined on the same point x0")
+            
         else:
             z0=self.__diff_eq.lclm(other.annihilator())
         newlist =[]
@@ -398,14 +382,19 @@ class DFiniteFunction(object):
         sage: cos4t*cos4t*cos4t
         DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
         """
+        if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )):
+            L=[other*self.__initial_conditions[i] for i in range(self.order())]
+            return DFiniteFunction(self.__diff_eq,L,self.__x0)
+        
+        if(isinstance(other,Polynomial)):
+            pol_D=PolyToDiff(other,1,self.__x0)
+            return self*pol_D
+
+        if(not(isinstance(other,DFiniteFunction))):
+            raise TypeError,"Incompatible type:"+str(type(other))
+            
         if(self.__x0!=other.initial_conditions()[0]):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-        if(isinstance(self.__diff_eq,Polynomial) or isinstance(other.__diff_eq,Polynomial)):
-            z0=self.__diff_eq*other.annihilator()
-            if(isinstance(z0,Polynomial)):
-                if(self.__x0!=other.initial_conditions()[0]):
-                    raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
-                return DFiniteFunction(z0,[],self.__x0)
         else:
             z0=self.__diff_eq.symmetric_product(other.annihilator())
         newlist =[]
@@ -458,6 +447,7 @@ class DFiniteFunction(object):
     
     def composition(self,g):
         """
+        g est une fraction rationnelle ou un polynome
         Fonction qui retourne la composition de diff_op avec f (fog)
         Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme une DFiniteFunction
         
@@ -479,7 +469,15 @@ class DFiniteFunction(object):
             if(P(x,g(x))==0):
                 d=self.__diff_eq.annihilator_of_composition(g)
                 #print "Composition:",d
-                return d
+                if(isinstance(g,FractionFieldElement)):
+                    if(g.denominator()(self.__x0)==0):
+                         raise NotImplementedError("the function g is not defined at x0="+str(self.__x0)+" need to implement __call__ in order to treat this case")
+                
+                if(g(self.__x0)==self.__x0):
+                    Initial_conditions=calculate_initial_conditions(self,d.order()-1)
+                    return DFiniteFunction(d,Initial_conditions,self.__x0)
+                else:#pour faire cette partie de la composition il faut mettre en place une fonction call
+                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet")
             else:
                 #print "The Result is not a Dfinite function"
                 raise NotImplementedError("The Result is not a Dfinite function")
