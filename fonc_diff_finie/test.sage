@@ -1,6 +1,6 @@
 print("Starting test script")
 from ore_algebra import *;
-from  DFiniteFunction import *;R.<y> = PolynomialRing(QQ); A.<Dy> = OreAlgebra(R);K=A.random_element(3);
+from  DFiniteFunction import *;R.<y> = PolynomialRing(QQ,order='neglex'); A.<Dy> = OreAlgebra(R);K=A.random_element(3);
 p=DFiniteFunction(K,[0,1,1],0);
 print('-------------------------------------------------------------------------')
 K=A.random_element(2);s=DFiniteFunction(K,[0,1],0);
@@ -34,8 +34,8 @@ print("Test of dfin_function:")
 print('-------------------------------------------------------------------------')
 #from dfin_functions import *
 n=2
-calc_init_con(s,n)
-calc_init_con(s,n+3)
+calculate_initial_conditions(s,n)
+calculate_initial_conditions(s,n+3)
 print('-------------------------------------------------------------------------')
 print("Test of dfin_functio:complete list of coefficients")
 print('-------------------------------------------------------------------------')
@@ -56,7 +56,7 @@ print('-------------------------------------------------------------------------
 exp3t=DFiniteFunction(Dy-3,[1])
 print "Dif eq:exp3t=",exp3t.annihilator()
 n=4
-IC=calc_init_con(exp3t,n)
+IC=calculate_initial_conditions(exp3t,n)
 print "Initial condition for n=",n,":",IC
 print('-------------------------------------------------------------------------')
 print("Sum of exp3t and cos4t")
@@ -74,7 +74,7 @@ Z.print_eq()
 print('-------------------------------------------------------------------------')
 print("Dif of exp3t and cos4t")
 print('-------------------------------------------------------------------------')
-dcos4t=DFiniteFunction(Dy*(Dy^2+16),calc_init_con(cos4t,2))
+dcos4t=DFiniteFunction(Dy*(Dy^2+16),calculate_initial_conditions(cos4t,2))
 Z=cos4t-dcos4t;
 print("cos4t-cos4t")
 Z.print_eq()

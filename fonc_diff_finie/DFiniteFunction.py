@@ -2,7 +2,26 @@
 """
 Created on Tue Mar 14 14:44:25 2017
 @author: HAKAM Sophia ,DJERRAB Mohamed, KANYAMIBWA Romaric
+
+DFiniteFunction
+================
+
+Special classes for the implementation of DFiniteFunctions in SageMath with the use of the Ore_algebra module
+
 """
+
+#############################################################################
+#  Copyright (C) 2017                                                       #
+#                                                                           #
+#                                                                           #
+#  Distributed under the terms of the GNU General Public License (GPL)      #
+#  either version 3, or (at your option) any later version                  #
+#                                                                           #
+#  http://www.gnu.org/licenses/                                             #
+#############################################################################
+
+from __future__ import absolute_import
+
 
 from sage.rings.integer_ring import ZZ
 from ore_algebra.ore_operator import OreOperator, UnivariateOreOperator
@@ -50,7 +69,7 @@ def calc_sum_func(L,CI,x):
         t=t/L[-1]
     return -t
 
-def calc_init_con(DFin_func,n):
+def calculate_initial_conditions(DFin_func,n):
     """
     -DFin_func est une variable une DFiniteFunction 
     -n est un entier
@@ -62,7 +81,7 @@ def calc_init_con(DFin_func,n):
     sage: from  DFiniteFunction import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);
     sage: diff_eq= Dx^2+16
     sage: cos4t=DFiniteFunction(diff_eq,[1,0])
-    sage: calc_init_con(cos4t,5)
+    sage: calculate_initial_conditions(cos4t,5)
     [1, 0, -16, 0, 256, 0]
     
     """
@@ -71,7 +90,7 @@ def calc_init_con(DFin_func,n):
         op=(DFin_func.annihilator().parent().gen())
         A = OreAlgebra(op.base_ring()[str(op)], 'D'+str(op))
         L=DFin_func.coefficients()
-        x0=DFin_func.get_x0()
+        x0=DFin_func.initial_conditions()[0]
         CI=[DFin_func.coefficients()[0](x0)]
         d=copy(DFin_func.annihilator())
         order_d=0
@@ -85,13 +104,13 @@ def calc_init_con(DFin_func,n):
     n=int(n)
     if(n<0):
         raise ValueError("order must always be a positive integer")
-    length_IC=len(DFin_func.get_init_cond())
+    length_IC=len(DFin_func.initial_conditions()[1])
     if(length_IC>n):
-        return DFin_func.get_init_cond()[:n+1]
+        return DFin_func.initial_conditions()[1][:n+1]
     else:
-        CI=DFin_func.get_init_cond()
+        CI=DFin_func.initial_conditions()[1]
         L=DFin_func.coefficients()
-        x0=DFin_func.get_x0()
+        x0=DFin_func.initial_conditions()[0]
         CI=CI+[calc_sum_func(L,CI,x0)]
         d=copy(DFin_func.annihilator())
         order_d=d.order()
@@ -164,7 +183,7 @@ class DFiniteFunction(object):
         INPUT:
         Calcul formel sur des solutions d'équations différentielles linéaires
         -diff_eq est une equation differentielle de type 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'
-        -init_cond est une liste de conditions initiales
+        -initial_conditions est une liste de conditions initiales
         -et x0 (optionel) est le point sur lequel on definit les conditions initiales
         
         OUTPUT:
@@ -185,7 +204,7 @@ class DFiniteFunction(object):
         
     """
     
-    def __init__(self,diff_eq,init_cond=[],x0=0):#constructeur de la classe DFiniteFucntion
+    def __init__(self,diff_eq,initial_conditions=[],x0=0):#constructeur de la classe DFiniteFucntion
         self.__diff_eq = diff_eq
         self.__x0=x0
         #Avant de construire la DFiniteFunction on verifie que le coefficient dominant ne s'annule pas en x0
@@ -193,8 +212,8 @@ class DFiniteFunction(object):
             if(diff_eq.coefficients()[-1](x0)==0):
                 raise ValueError("Forbiden value, x0="+str(x0)+" is a singular point")
         if(isinstance(diff_eq,UnivariateOreOperator)):
-            if(len(init_cond)>=diff_eq.order()):#on souleve une exception si les Condition initiales ne suffisent pas pour decrire la fonction
-                self.__init_cond=init_cond
+            if(len(initial_conditions)>=diff_eq.order()):#on souleve une exception si les Condition initiales ne suffisent pas pour decrire la fonction
+                self.__initial_conditions=initial_conditions
             else:
                 raise ValueError("Not enough initial values.")
         else:
@@ -207,7 +226,8 @@ class DFiniteFunction(object):
         
         OUTPUT:
         -cette methode retourne la DFiniteFunction associé à func s'elle existe
-        (Pour l'instant cette methode marche que pour des polynomes mais dans une future
+        
+        (Pour l'instant cette methode ne marche que pour des polynomes mais dans une future
         implementation on peut essayer de tranformer d'autres fonction en DFiniteFunction comme les
         log(1+x),sinx,cosx,tanx,1/(1-x),. . .   qu'on sait qu'il sont developpable en serie entiere)
         """
@@ -222,14 +242,11 @@ class DFiniteFunction(object):
         """
         return self.__diff_eq
     
-    def get_x0(self):
-        return self.__x0
-   
-    def get_init_cond(self):
+    def initial_conditions(self):
         """
-        Retourne la liste avec les conditions initiales
+        Retourne le couple (x0,ini) x0 est le point sur lequel les conditions initiales sont defini
         """
-        return self.__init_cond
+        return (self.__x0,self.__initial_conditions)
         
     def order(self):
         """
@@ -269,11 +286,11 @@ class DFiniteFunction(object):
         ('Equation:', x*Dx + x^2)
         """
         print ("D-Finite function:")
-        print ("Initiale Conditions at x0="+str(self.__x0)+":",self.__init_cond)
+        print ("Initiale Conditions at x0="+str(self.__x0)+":",self.__initial_conditions)
         print ("Equation:",self.__diff_eq)
         
     def __repr__(self):
-        ch="DFiniteFunction("+str(self.__diff_eq)+","+str(self.__init_cond)+")"
+        ch="DFiniteFunction("+str(self.__diff_eq)+","+str(self.__initial_conditions)+")"
         return str(ch)
         
     def __eq__(self,other):
@@ -282,23 +299,24 @@ class DFiniteFunction(object):
         """
         if(self.__x0!=other.__x0):
             raise NotImplementedError("Cannot yet compare D-Finite Functions defined in different Points")
-        if self.__diff_eq==other.annihilator() and self.__init_cond==other.get_init_cond():
+        if self.__diff_eq==other.annihilator() and self.__initial_conditions==other.initial_conditions()[1]:
             return True
-        length=min(len(self.__init_cond),len(other.get_init_cond()))
-        if self.__init_cond[:length]!=other.get_init_cond()[:length]:
+        length=min(len(self.__initial_conditions),len(other.initial_conditions()[1]))
+        if self.__initial_conditions[:length]!=other.initial_conditions()[1][:length]:
             return False
         temp_diff=self-other
-        L=temp_diff.get_init_cond()
+        L=temp_diff.initial_conditions()[1]
         zeroList=[0]*len(L)
         if((temp_diff.annihilator()==other.annihilator() or self.__diff_eq==temp_diff.annihilator()) and L==zeroList):
             return True
-        elif calc_init_con(temp_diff,temp_diff.order()*2)==[0]*(temp_diff.order()*2):
+        elif calculate_initial_conditions(temp_diff,temp_diff.order()*2)==[0]*(temp_diff.order()*2):
             return True
         elif L!=zeroList:
             return False
         
     def __ne__(self,other):
         """
+        Test de difference de deux DFinteFunctions
         """
         return not(self==other)
     
@@ -325,7 +343,7 @@ class DFiniteFunction(object):
         newlist =[]
         n=self.order()
         i=0
-        newlist = [-self.__init_cond[i] for i in range(n)]
+        newlist = [-self.__initial_conditions[i] for i in range(n)]
         z = DFiniteFunction(z0,newlist,self.__x0)
         return z
         
@@ -337,15 +355,15 @@ class DFiniteFunction(object):
 
     def __add__(self,other):
         """Addition de 2 equa diff"""
-        if(self.__x0!=other.get_x0()):
+        if(self.__x0!=other.initial_conditions()[0]):
             raise ValueError("Incompatible initial condition, the initial conditions must be defined on the same point x0")
             
         if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )): #or isinstance(other,Polynomial)):
-            L=copy(self.__init_cond)
+            L=copy(self.__initial_conditions)
             if( not L):
                 L=[other]
             else:
-                L[0]=other+self.__init_cond[0]
+                L[0]=other+self.__initial_conditions[0]
             return DFiniteFunction(self.__diff_eq+other,L,self.__x0)
         
         if(isinstance(other,Polynomial)):
@@ -366,8 +384,8 @@ class DFiniteFunction(object):
             z0=self.__diff_eq.lclm(other.annihilator())
         newlist =[]
         n=z0.order()
-        L1=calc_init_con(self,n-1)
-        L2=calc_init_con(other,n-1)
+        L1=calculate_initial_conditions(self,n-1)
+        L2=calculate_initial_conditions(other,n-1)
         i=0
         newlist = [L1[i] + L2[i] for i in range(n)]
         z = DFiniteFunction(z0,newlist,self.__x0)
@@ -380,20 +398,20 @@ class DFiniteFunction(object):
         sage: cos4t*cos4t*cos4t
         DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
         """
-        if(self.__x0!=other.get_x0()):
+        if(self.__x0!=other.initial_conditions()[0]):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         if(isinstance(self.__diff_eq,Polynomial) or isinstance(other.__diff_eq,Polynomial)):
             z0=self.__diff_eq*other.annihilator()
             if(isinstance(z0,Polynomial)):
-                if(self.__x0!=other.get_x0()):
+                if(self.__x0!=other.initial_conditions()[0]):
                     raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
                 return DFiniteFunction(z0,[],self.__x0)
         else:
             z0=self.__diff_eq.symmetric_product(other.annihilator())
         newlist =[]
         n=z0.order()
-        L1=calc_init_con(self,n-1)
-        L2=calc_init_con(other,n-1)
+        L1=calculate_initial_conditions(self,n-1)
+        L2=calculate_initial_conditions(other,n-1)
         i=0
         newlist = [Leibniz_Product_rule(L1[:i+1],L2[:i+1],i) for i in range(n)]
         z = DFiniteFunction(z0,newlist,self.__x0)
@@ -410,14 +428,14 @@ class DFiniteFunction(object):
         power_series=self.power_series(order)
         power_series_n=power_series**n
         coeff_power_series_n=power_series_n.coefficients(sparse=False)
-        Init_Cond=[0]*order
+        Initial_conditions=[0]*order
         f=1
-        Init_Cond[0]=coeff_power_series_n[0]
+        Initial_conditions[0]=coeff_power_series_n[0]
         for i in range(1,order):
             f=f*i
-            Init_Cond[i]=coeff_power_series_n[i]*f
+            Initial_conditions[i]=coeff_power_series_n[i]*f
             
-        return DFiniteFunction(self.__diff_eq.symmetric_power(n),Init_Cond,self.__x0)
+        return DFiniteFunction(self.__diff_eq.symmetric_power(n),Initial_conditions,self.__x0)
     
     
     def derivative(self):
@@ -432,10 +450,10 @@ class DFiniteFunction(object):
         """
         op=(self.__diff_eq.parent().gen())
         tmp_diff=self.__diff_eq
-        tmp_IC=self.__init_cond
+        tmp_IC=self.__initial_conditions
         tmp_diff=op*tmp_diff
         n=tmp_diff.order()
-        tmp_IC=calc_init_con(self,n-1)
+        tmp_IC=calculate_initial_conditions(self,n-1)
         return DFiniteFunction(tmp_diff,tmp_IC,self.__x0)
     
     def composition(self,g):
@@ -481,7 +499,7 @@ class DFiniteFunction(object):
         """
         diff_eq=self.__diff_eq
         op=diff_eq.base_ring()
-        CI=calc_init_con(self,order)
+        CI=calculate_initial_conditions(self,order)
         L=[0]*order
         if(self.__x0==0):
             L[0]=CI[0]
@@ -497,5 +515,5 @@ class DFiniteFunction(object):
         return op(L)
     
 
-      
- 
+        
+        
