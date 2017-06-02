@@ -452,7 +452,7 @@ class DFiniteFunction(object):
         Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme une DFiniteFunction
         
         Exemple:
-        sage: cos4t=DFiniteFunction(Dx^2+4,[1,0])
+        sage: cos4t=DFiniteFunction(Dx^2+16,[1,0])
         sage: cos4t.composition(x^2)
             ('Fraction Field', x^2)
             P(x,g)= 0
