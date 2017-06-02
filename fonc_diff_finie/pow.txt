@@ -1,9 +1,0 @@
-def __pow__(self,n=2):
-        res=self.__diff_eq.symmetric_power(n)# self_n
-        Init_Cond_self=calc_init_con(self,res.order())
-        Init_Cond_self_n=Init_Cond_self
-        for j in range(n+1):
-            Init_Cond_self_n=[Leibniz_Product_rule(Init_Cond_self[:i+1],Init_Cond_self_n[:i+1],i) for i in range(n)]
-        
-        return DFiniteFunction(self.__diff_eq.symmetric_power(n),Init_Cond_self_n,self.__x0)
-    
