@@ -35,6 +35,7 @@ from ore_algebra.ore_algebra import OreAlgebra
 from sage.rings.rational import Rational
 from sage.rings.integer import Integer
 from sage.arith.all import binomial
+from sage.combinat.combinat import bell_polynomial
 from copy import copy
 
 def isDFiniteFunction(D):
@@ -87,8 +88,19 @@ def calculate_initial_conditions(DFin_func,n,x=0):
     
     """
     if(isinstance(DFin_func,Polynomial) or isinstance(DFin_func,FractionFieldElement)):
-        tmpDFin_func=PolyToDiff(DFin_func,1,x)
-        return calculate_initial_conditions(tmpDFin_func,n)
+        if(isinstance(DFin_func,FractionFieldElement)):
+            if(DFin_func.denominator()(x)==0):
+                raise NotImplementedError("the function g is not defined at x0="+str(self.__x0))
+        CI=[DFin_func(x)]
+        P=copy(DFin_func)
+        for i in range(n):
+            P=P.derivative()
+            if(isinstance(P, ( int, long,float,complex,Integer,Rational ) )):
+                CI=CI+[P]
+            else:
+                CI=CI+[P(x)]
+        return CI
+            
     
     op=(DFin_func.annihilator().parent().gen())
     if(not(isinstance(DFin_func,DFiniteFunction))):
@@ -106,7 +118,7 @@ def calculate_initial_conditions(DFin_func,n,x=0):
         CI=CI+[calc_sum_func(L,CI,x0)]
         d=copy(DFin_func.annihilator())
         order_d=d.order()
-        while(d.order()!=n):
+        while(d.order()<n):
             d=op*d
             L=d.list()
             CI=CI+[calc_sum_func(L,CI,x0)]
@@ -154,9 +166,10 @@ def PolyToDiff(Poly,n = 1,x=0):
 
 def Leibniz_Product_rule(f,g,n):
     """
+    pour de question de lisibilite on note Dx^n(f(x0)) la derive nieme de f dans un point x0
     Input:
-    -f est une liste de valeurs de taille au moins n 
-    -g est une liste de valeurs de taille au moins n
+    -f est une liste de valeurs de taille au moins n [f(x0),Dx(f(x0)),.....,Dx^n(f(x0))]
+    -g est une liste de valeurs de taille au moins n [g(x0),Dx(g(x0)),.....,Dx^n(g(x0))]
     -n est un entier
     Output:
     -A la sortie cette fonction envoi le produit de Leibniz de la fonction Dx^n(f*g) dans un point x0
@@ -168,8 +181,31 @@ def Leibniz_Product_rule(f,g,n):
             Leibniz_sum=Leibniz_sum+binomial(n,k)*f[n-k]*g[k]
         return Leibniz_sum
     else:
-        raise TypeError("Incompatible list length,the list f and g must have at least n elements")
+        raise TypeError("Incompatible list length,the list f and g must have at least n+1 elements")
         
+def Faa_di_Bruno_formula(f,g,n):
+    """
+    Faà di Bruno's formula pour la derivation de f(g(x))
+    -f est une liste de valeurs de taille au moins n [f(x0),Dx(f(x0)),.....,Dx^n(f(x0))]
+    -g est une liste de valeurs de taille au moins n [g(x0),Dx(g(x0)),.....,Dx^n(g(x0))]
+    -n est un entier
+    Output:
+    -A la sortie cette fonction envoi Dx^n(f(g(x))) en x0 en utilisant la formule de Faà di Bruno
+    """
+    if(len(f)>=n and len(g)>=n):
+        Faa_di_Bruno_sum=0
+        for k in range(n):
+            var_x=tuple(g[1:n-k+1])
+            #print "x:",var_x
+            #print "bell",bell_polynomial(n,k+1)
+            Bell_pol=bell_polynomial(n,k+1)(var_x)
+            #print Bell_pol
+            Faa_di_Bruno_sum=Faa_di_Bruno_sum+f[k]*Bell_pol
+        #print "Res:",Faa_di_Bruno_sum
+        return Faa_di_Bruno_sum
+    else:
+        raise TypeError("Incompatible list length,the list f and g must have at least n elements")
+
     
 class DFiniteFunction(object):
 
@@ -467,17 +503,40 @@ class DFiniteFunction(object):
             P=g(x)-y
             #print "P(x,g)=",P(x,g(x))
             if(P(x,g(x))==0):
-                d=self.__diff_eq.annihilator_of_composition(g)
                 #print "Composition:",d
                 if(isinstance(g,FractionFieldElement)):
                     if(g.denominator()(self.__x0)==0):
                          raise NotImplementedError("the function g is not defined at x0="+str(self.__x0)+" need to implement __call__ in order to treat this case")
                 
+                d=self.__diff_eq.annihilator_of_composition(g)
                 if(g(self.__x0)==self.__x0):
-                    Initial_conditions=calculate_initial_conditions(self,d.order()-1)
+                    n=d.order()-1
+                    IC_f=calculate_initial_conditions(self,n)
+                    IC_g=calculate_initial_conditions(g,n,self.__x0)
+                    Initial_conditions=[self.__initial_conditions[0]]
+                    if(n>1):
+                        Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
                     return DFiniteFunction(d,Initial_conditions,self.__x0)
+                
+                tmp_Polynome=g-self.__x0
+                if(isinstance(tmp_Polynome,FractionFieldElement)):
+                    tmp_Polynome=tmp_Polynome.numerator()
+                    
+                tmpList=tmp_Polynome.roots(self.__diff_eq.base_ring().base())
+                
+                print "Roots:",tmpList
+                if(tmpList):
+                    x0=tmpList[0][0]
+                    n=d.order()-1
+                    IC_f=calculate_initial_conditions(self,n)
+                    IC_g=calculate_initial_conditions(g,n,x0)
+                    Initial_conditions=[self.__initial_conditions[0]]
+                    if(n>1):
+                        Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
+                    return DFiniteFunction(d,Initial_conditions,x0)
                 else:#pour faire cette partie de la composition il faut mettre en place une fonction call
-                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet")
+                    print "Roots:",tmpList
+                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet:"+str(tmpList))
             else:
                 #print "The Result is not a Dfinite function"
                 raise NotImplementedError("The Result is not a Dfinite function")
@@ -487,7 +546,7 @@ class DFiniteFunction(object):
         
     def power_series(self,order=6):
         """
-        order: est un entier naturel qui represente l'ordre de developement de la serie entiere
+        order: est un entier naturel qui represente l'ordre de developement de la serie formele
         Cette fonction retourne le developpement en serie  de l'equation differentielle self
         
         Exemple:
