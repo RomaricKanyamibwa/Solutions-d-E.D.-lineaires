@@ -1,0 +1,5 @@
+http://doc.sagemath.org/html/en/reference/combinat/sage/combinat/combinat.html#sage.combinat.combinat.bell_number
+
+https://en.wikipedia.org/wiki/Fa%C3%A0_di_Bruno%27s_formula
+
+https://arxiv.org/pdf/1403.0519.pdf
