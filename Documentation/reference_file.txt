@@ -11,3 +11,7 @@ http://marc.mezzarobba.net/code/ore_algebra-analytic/
 https://en.wikipedia.org/wiki/Bessel_function
 
 https://en.wikipedia.org/wiki/Struve_function
+
+https://en.wikipedia.org/wiki/Power_series
+
+https://en.wikipedia.org/wiki/Analytic_function
