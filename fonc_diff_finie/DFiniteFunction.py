@@ -36,6 +36,7 @@ from sage.rings.rational import Rational
 from sage.rings.integer import Integer
 from sage.arith.all import binomial
 from sage.combinat.combinat import bell_polynomial
+from sage.rings.power_series_ring import PowerSeriesRing
 from copy import copy
 
 def isDFiniteFunction(D):
@@ -200,7 +201,7 @@ def Faa_di_Bruno_formula(f,g,n):
             #print "bell",bell_polynomial(n,k+1)
             Bell_pol=bell_polynomial(n,k+1)(var_x)
             #print Bell_pol
-            Faa_di_Bruno_sum=Faa_di_Bruno_sum+f[k]*Bell_pol
+            Faa_di_Bruno_sum=Faa_di_Bruno_sum+f[k+1]*Bell_pol
         #print "Res:",Faa_di_Bruno_sum
         return Faa_di_Bruno_sum
     else:
@@ -514,8 +515,10 @@ class DFiniteFunction(object):
                     IC_f=calculate_initial_conditions(self,n)
                     IC_g=calculate_initial_conditions(g,n,self.__x0)
                     Initial_conditions=[self.__initial_conditions[0]]
-                    if(n>1):
+                    if(n>=1):
                         Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
+                    print "Order",n+1
+                    print "Init values:",Initial_conditions
                     return DFiniteFunction(d,Initial_conditions,self.__x0)
                 
                 tmp_Polynome=g-self.__x0
@@ -531,12 +534,14 @@ class DFiniteFunction(object):
                     IC_f=calculate_initial_conditions(self,n)
                     IC_g=calculate_initial_conditions(g,n,x0)
                     Initial_conditions=[self.__initial_conditions[0]]
-                    if(n>1):
+                    if(n>=1):
                         Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
+                    print "Order",n+1
+                    print "Init values:",Initial_conditions
                     return DFiniteFunction(d,Initial_conditions,x0)
                 else:#pour faire cette partie de la composition il faut mettre en place une fonction call
                     print "Roots:",tmpList
-                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet:"+str(tmpList))
+                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet.")
             else:
                 #print "The Result is not a Dfinite function"
                 raise NotImplementedError("The Result is not a Dfinite function")
@@ -552,24 +557,25 @@ class DFiniteFunction(object):
         Exemple:
         
         sage: cos4t.power_series(10)
-        512/315*x^8 - 256/45*x^6 + 32/3*x^4 - 8*x^2 + 1
+        1 - 8*z^2 + 32/3*z^4 - 256/45*z^6 + 512/315*z^8 + O(z^10)
         """
         diff_eq=self.__diff_eq
-        op=diff_eq.base_ring()
+        Ring=diff_eq.base_ring()
+        Ring_gen=diff_eq.base_ring().gen()
         CI=calculate_initial_conditions(self,order)
         L=[0]*order
-        if(self.__x0==0):
-            L[0]=CI[0]
-            f=1
-            for i in range(1,order):
-                f=f*i
-                L[i]=CI[i]/f
-        else:
-            an=diff_eq.to_S(OreAlgebra(QQ["n"], "Sn")) #Suite de la serie entiere associé à l'equation differentielle
-            an_order=an.order()
-            L=an.to_list(CI,order)
+        L[0]=CI[0]
+        f=1
+        for i in range(1,order):
+            f=f*i
+            L[i]=CI[i]/f
+        if(self.__x0!=0):
+            PowerSeries=Ring(L)
+            PowerSeries=PowerSeries(Ring_gen-self.__x0)
+            return PowerSeries
         #K = FractionField(PolynomialRing(QQ,str(op), order='neglex'))
-        return op(L)
+        Power_ring=PowerSeriesRing(Ring,Ring_gen)
+        return Power_ring(L).O(order)
     
 
         
