@@ -9,3 +9,5 @@ http://doc.sagemath.org/html/en/tutorial/programming.html
 http://marc.mezzarobba.net/code/ore_algebra-analytic/
 
 https://en.wikipedia.org/wiki/Bessel_function
+
+https://en.wikipedia.org/wiki/Struve_function
