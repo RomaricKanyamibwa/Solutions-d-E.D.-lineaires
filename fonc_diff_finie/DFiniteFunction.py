@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Mar 14 14:44:25 2017
-@author: HAKAM Sophia ,DJERRAB Mohamed, KANYAMIBWA Romaric
+@author: HAKAM Sophia, DJERRAB Mohamed, KANYAMIBWA Romaric
 
 DFiniteFunction
 ================
@@ -49,7 +49,7 @@ def isDFiniteFunction(D):
 def calc_sum_func(L,CI,x):
     """
     INPUT:
-    -L est une liste fonctions L=[f1,f2,. . . . ,fn]
+    -L est une liste de fonctions L=[f1,f2,. . . . ,fn]
     -CI est une liste de nombres(Condition initiales au point x) CI=[g1(x0),g2(x0), . . . . . ,gn(x0)]
     -x is an x0 point at which we evaluate the functions in L
     OUTPUT:
@@ -73,10 +73,10 @@ def calc_sum_func(L,CI,x):
 
 def calculate_initial_conditions(DFin_func,n,x=0):
     """
-    -DFin_func est une variable de type DFiniteFunction ou un polynome ou une fraction rationnelle
+    -DFin_func est une variable de type DFiniteFunction ou un polynôme ou une fraction rationnelle
     -n est un entier
-    -X (optionel) le point d'evaluation si DFinFunc est un polynome
-    Cette function calcule les n premiers conditions initiales de diff_eq
+    -X (optionel) le point d'évaluation si DFinFunc est un polynôme
+    Cette fonction calcule les n premières conditions initiales de diff_eq
     
     Exemple:
     
@@ -127,10 +127,10 @@ def calculate_initial_conditions(DFin_func,n,x=0):
 
 def PolyToDiff(Poly,order = 1,x=0):
     """
-    Poly: est un polynome
-    order: est l'ordre de l'equa diff à construire
-    x: est le point x0 surlequel on definira les conditions initiales
-    Cette fonction retourne la DFiniteFunction associé au polynome  P au point x
+    Poly: est un polynôme
+    order: est l'ordre de l'équa diff à construire
+    x: est le point x0 surlequel on définira les conditions initiales
+    Cette fonction retourne la DFiniteFunction associée au polynôme P au point x
 
     Exemple:
 
@@ -184,13 +184,13 @@ def PolyToDiff(Poly,order = 1,x=0):
 
 def Leibniz_Product_rule(f,g,n):
     """
-    pour de question de lisibilite on note Dx^n(f(x0)) la derive nieme de f dans un point x0
+    Pour une question de lisibilité, on note Dx^n(f(x0)) la dérivée n_ieme de f au point x0
     Input:
     -f est une liste de valeurs de taille au moins n [f(x0),Dx(f(x0)),.....,Dx^n(f(x0))]
     -g est une liste de valeurs de taille au moins n [g(x0),Dx(g(x0)),.....,Dx^n(g(x0))]
     -n est un entier
     Output:
-    -A la sortie cette fonction envoi le produit de Leibniz de la fonction Dx^n(f*g) dans un point x0
+    -A la sortie, cette fonction renvoie le produit de Leibniz de la fonction Dx^n(f*g) au point x0
     """
     if(len(f)>n and len(g)>n):
         Leibniz_sum=0
@@ -203,12 +203,12 @@ def Leibniz_Product_rule(f,g,n):
         
 def Faa_di_Bruno_formula(f,g,n):
     """
-    Faà di Bruno's formula pour la derivation de f(g(x))
+    Faà di Bruno's formula pour la dérivation de f(g(x))
     -f est une liste de valeurs de taille au moins n [f(x0),Dx(f(x0)),.....,Dx^n(f(x0))]
     -g est une liste de valeurs de taille au moins n [g(x0),Dx(g(x0)),.....,Dx^n(g(x0))]
     -n est un entier
     Output:
-    -A la sortie cette fonction envoi Dx^n(f(g(x))) en x0 en utilisant la formule de Faà di Bruno
+    -A la sortie, cette fonction renvoie Dx^n(f(g(x))) en x0 en utilisant la formule de Faà di Bruno
     """
     if(len(f)>=n and len(g)>=n):
         Faa_di_Bruno_sum=0
@@ -230,9 +230,9 @@ class DFiniteFunction(object):
     """
         INPUT:
         Calcul formel sur des solutions d'équations différentielles linéaires
-        -diff_eq est une equation differentielle de type 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'
+        -diff_eq est une équation différentielle de type 'ore_algebra.ore_operator_1_1.UnivariateDifferentialOperatorOverUnivariateRing'
         -initial_conditions est une liste de conditions initiales
-        -et x0 (optionel) est le point sur lequel on definit les conditions initiales
+        -et x0 (optionel) est le point sur lequel on définit les conditions initiales
         
         OUTPUT:
         -A DFiniteFunction
@@ -271,14 +271,14 @@ class DFiniteFunction(object):
     def toDFiniteFunction(self,func,x0=0):
         """
         INPUT:
-        -func est une fonction de classe C infini ou au moins une fonction de classe C 1
+        -func est une fonction de classe C infinie ou au moins une fonction de classe C 1
         
         OUTPUT:
-        -cette methode retourne la DFiniteFunction associé à func s'elle existe
+        -cette méthode retourne la DFiniteFunction associée à func si elle existe
         
-        (Pour l'instant cette methode ne marche que pour des polynomes mais dans une future
-        implementation on peut essayer de tranformer d'autres fonction en DFiniteFunction comme les
-        log(1+x),sinx,cosx,tanx,1/(1-x),. . .   qu'on sait qu'il sont developpable en serie entiere)
+        (Pour l'instant, cette méthode ne marche que pour des polynômes mais dans une future
+        implémentation, on peut essayer de tranformer d'autres fonction en DFiniteFunction comme les
+        log(1+x),sinx,cosx,tanx,1/(1-x),. . .   qu'on sait qu'ils sont développable en série entière)
         """
         if isinstance(func,Polynomial):
             return PolyToDiff(func,1,x0)
@@ -287,19 +287,19 @@ class DFiniteFunction(object):
 
     def annihilator(self):
         """
-        L'operateur differentiel associé à self
+        L'opérateur différentiel associé à self
         """
         return self.__diff_eq
     
     def initial_conditions(self):
         """
-        Retourne le couple (x0,ini) x0 est le point sur lequel les conditions initiales sont defini
+        Retourne le couple (x0,ini) x0 est le point sur lequel les conditions initiales sont definies
         """
         return (self.__x0,self.__initial_conditions)
         
     def order(self):
         """
-        L'ordre de l'equation differentiel associé à self
+        L'ordre de l'équation différentielle associé à self
         
         Exemple:
         sage: diff_eq= Dx^7+16*x*Dx^4
@@ -313,7 +313,7 @@ class DFiniteFunction(object):
 
     def degree(self):
         """
-        Retourne le degree du polynome de plus grand degree
+        Retourne le degré du polynôme de plus grand degré
         
         Exemple:
         sage: D=x*Dx+x^2
@@ -372,7 +372,7 @@ class DFiniteFunction(object):
         
     def __ne__(self,other):
         """
-        Test de difference de deux DFinteFunctions
+        Test de différence de deux DFinteFunctions
         """
         return not(self==other)
     
@@ -498,7 +498,7 @@ class DFiniteFunction(object):
     
     def __call__(self,g):
         """
-        Composition avec une fonction g et plus tard evaluation d'une fonction
+        Composition avec une fonction g (et, plus tard, évaluation d'une fonction)
         
         sage: my_exp(2*z)
         DFiniteFunction(Dz - 2,[1],x0=0)
@@ -510,7 +510,7 @@ class DFiniteFunction(object):
     
     def derivative(self):
         """
-        Cette fonction calcule la derive d'une DFiniteFunction
+        Cette fonction calcule la dérivée d'une DFiniteFunction
         
         Exemple:
         sage: my_arctan=DFiniteFunction((z^2 + 1)*Dz^2 + 2*z*Dz,[0, 1],0)
@@ -529,10 +529,10 @@ class DFiniteFunction(object):
     def integral(self,y0=0):
         """
         INPUT:
-        y0:  la valeur de l'integrale de la fonction en x0
+        y0:  la valeur de l'intégrale de la fonction en x0
         
         OUTPUT:
-        cette fnction calcule l'integral de la  DFiniteFunction
+        cette fonction calcule l'intégrale de la DFiniteFunction
         
         sage: my_log = DFiniteFunction(z*Dz^2+Dz, [0,1], x0=1)
         sage: my_log.integral()
@@ -540,7 +540,7 @@ class DFiniteFunction(object):
         sage: my_log.integral().annihilator()(log(z).integral(z))
         0
         
-        RMQ: Dans cette fonction la premiere condition initiale F(x0)=y0 serait presque toujours 0 parce que on connait pas explicitement la primitive de notre fonction
+        RMQ: Dans cette fonction, la première condition initiale F(x0)=y0 serait presque toujours 0 parce que on ne connait pas explicitement la primitive de notre fonction
         """
         diff=self.__diff_eq.annihilator_of_integral()
         order=diff.order()
@@ -565,9 +565,9 @@ class DFiniteFunction(object):
     
     def composition(self,g):
         """
-        g est une fraction rationnelle ou un polynome
-        Fonction qui retourne la composition de diff_op avec f (fog)
-        Pour l'instant la fonction retourne la composition que en forme d'une equation diff et pas comme une DFiniteFunction
+        g est une fraction rationnelle ou un polynôme
+        Fonction qui retourne la composition de diff_op avec f (f o g)
+        Pour l'instant, la fonction retourne la composition uniquement sous la forme d'une équation diff et pas comme une DFiniteFunction
         
         Exemple:
         sage: cos4t=DFiniteFunction(Dx^2+16,[1,0])
@@ -632,8 +632,8 @@ class DFiniteFunction(object):
         
     def power_series(self,order=6):
         """
-        order: est un entier naturel qui represente l'ordre de developement de la serie formele
-        Cette fonction retourne le developpement en serie  de l'equation differentielle en x0
+        order: est un entier naturel qui représente l'ordre du dévelopement de la série formelle
+        Cette fonction retourne le developpement en série entière de l'équation différentielle en x0
         
         Exemple:
         
