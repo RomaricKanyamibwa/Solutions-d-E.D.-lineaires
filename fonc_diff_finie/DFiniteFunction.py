@@ -96,7 +96,7 @@ def calculate_initial_conditions(DFin_func,n,x=0):
         P=copy(DFin_func)
         for i in range(n):
             P=P.derivative()
-            if(isinstance(P, ( int, long,float,complex,Integer,Rational ) )):
+            if(isinstance(P, ( int, long,float,complex,Integer,Rational) )):
                 CI=CI+[P]
             else:
                 CI=CI+[P(x)]
@@ -125,23 +125,29 @@ def calculate_initial_conditions(DFin_func,n,x=0):
             CI=CI+[calc_sum_func(L,CI,x0)]
         return CI
 
-def PolyToDiff(Poly,n = 1,x=0):
+def PolyToDiff(Poly,order = 1,x=0):
     """
     Poly: est un polynome
-    n: est l'ordre de l'equa diff à construire
+    order: est l'ordre de l'equa diff à construire
     x: est le point x0 surlequel on definira les conditions initiales
     Cette fonction retourne la DFiniteFunction associé au polynome  P au point x
 
     Exemple:
 
-    sage: P=3*x^4 - 6*x^3 + 5
+    sage: P=3*y^4 - 6*y^3 + 5
     sage: PolyToDiff(P)
     DFiniteFunction((3*y^4 - 6*y^3 + 5)*Dy - 12*y^3 + 18*y^2,[5])
 
     """
     P=copy(Poly)
     op=P.parent().gen()
+    ch = 'D'+str(op)
+    A = OreAlgebra(op.base_ring()[op],'D'+str(op))
+    #if(isinstance(P, ( int, long,float,complex,Integer,Rational ) )):
+        #print "Oper:",A(ch)
+        #return DFiniteFunction(A(ch),[P],x
     if(isinstance(P,Polynomial) or isinstance(P,FractionFieldElement)):
+        n=order
         h = copy(P)
         L = [0]*n
         for i in range(n):
@@ -152,15 +158,26 @@ def PolyToDiff(Poly,n = 1,x=0):
                 L=L[:i]
                 n=i
                 P=tmp
+                if(n==0):
+                    return DFiniteFunction(A(ch),[Poly],x)
                 break
         h=P
         euclid=(Poly).quo_rem(h) # division euclidienne de Poly avec h
         SavePoly=euclid[0]+euclid[1]/(h)
         ch = 'D'+str(op)+'^' + str(n)
-        A = OreAlgebra(op.base_ring()[op],'D'+str(op))
         z = SavePoly.denominator()*(SavePoly*A(ch) - 1)
-        if(z.coefficients()[-1](x)==0):
-            raise ValueError("Forbiden value, x0="+str(x)+" is a singular point")
+        if(z.coefficients()):
+            if(z.coefficients()[-1](x)==0):
+                #raise ValueError("Forbiden value, x0="+str(x)+" is a singular point")
+                x0=ZZ.random_element()
+                while(z.coefficients()[-1](x0)==0):
+                    x0=Poly.base_ring().random_element()
+                P=copy(Poly)
+                for i in range(n):
+                    L[i] = P(x0)
+                    P = P.derivative()
+                print("Forbiden value, x0="+str(x)+" is a singular point . . . switching x0 point to "+str(x0))
+                return DFiniteFunction(z,L,x0)
         return DFiniteFunction(z,L,x)
     else:
         raise TypeError("A Polynomial function is expected as argument")
@@ -239,9 +256,10 @@ class DFiniteFunction(object):
         self.__diff_eq = diff_eq
         self.__x0=x0
         #Avant de construire la DFiniteFunction on verifie que le coefficient dominant ne s'annule pas en x0
-        if(isinstance(diff_eq.coefficients()[-1],Polynomial)):
-            if(diff_eq.coefficients()[-1](x0)==0):
-                raise ValueError("Forbiden value, x0="+str(x0)+" is a singular point")
+        if(diff_eq.coefficients()):
+            if(isinstance(diff_eq.coefficients()[-1],Polynomial)):
+                if(diff_eq.coefficients()[-1](x0)==0):
+                    raise ValueError("Forbiden value, x0="+str(x0)+" is a singular point")
         if(isinstance(diff_eq,UnivariateOreOperator)):
             if(len(initial_conditions)>=diff_eq.order()):#on souleve une exception si les Condition initiales ne suffisent pas pour decrire la fonction
                 self.__initial_conditions=initial_conditions
@@ -269,7 +287,7 @@ class DFiniteFunction(object):
 
     def annihilator(self):
         """
-        L'equation differentiel associé à self
+        L'operateur differentiel associé à self
         """
         return self.__diff_eq
     
@@ -321,12 +339,19 @@ class DFiniteFunction(object):
         print ("Equation:",self.__diff_eq)
         
     def __repr__(self):
-        ch="DFiniteFunction("+str(self.__diff_eq)+","+str(self.__initial_conditions)+")"
+        ch="DFiniteFunction("+str(self.__diff_eq)+","+str(self.__initial_conditions)+",x0="+str(self.__x0)+")"
         return str(ch)
         
     def __eq__(self,other):
         """
         Tests whether or not 2 functions are equal or not 
+        
+        Exemple:
+        sage: my_arctan = DFiniteFunction((z^2+1)*Dz^2 + 2*z*Dz, [0,1])
+        sage: PolyToDiff(1/(z^2+1))
+        DFiniteFunction((z^2 + 1)*Dz + 2*z,[1],x0=0)
+        sage: PolyToDiff(1/(z^2+1))==my_arctan.derivative()
+        True
         """
         if(self.__x0!=other.__x0):
             raise NotImplementedError("Cannot yet compare D-Finite Functions defined in different Points")
@@ -417,7 +442,7 @@ class DFiniteFunction(object):
         """Multiplication de 2 equa diff
         sage:cos4t=DFiniteFunction(Dy^2+16,[1,0])
         sage: cos4t*cos4t*cos4t
-        DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
+        DFiniteFunction(Dz^4 + 160*Dz^2 + 2304,[1, 0, -48, 0],x0=0)
         """
         if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )):
             L=[other*self.__initial_conditions[i] for i in range(self.order())]
@@ -447,11 +472,19 @@ class DFiniteFunction(object):
         """
         sage:cos4t=DFiniteFunction(Dy^2+16,[1,0])
         sage: cos4t^3
-        DFiniteFunction(Dy^4 + 160*Dy^2 + 2304,[1, 0, -48, 0])
+        DFiniteFunction(Dz^4 + 160*Dz^2 + 2304,[1, 0, -48, 0],x0=0)
         """
         res=self.__diff_eq.symmetric_power(n)
         order=res.order()
-        power_series=self.power_series(order)
+        Ring=self.__diff_eq.base_ring()
+        CI=calculate_initial_conditions(self,order)
+        L=[0]*order
+        L[0]=CI[0]
+        f=1
+        for i in range(1,order):
+            f=f*i
+            L[i]=CI[i]/f
+        power_series=Ring(L)
         power_series_n=power_series**n
         coeff_power_series_n=power_series_n.coefficients(sparse=False)
         Initial_conditions=[0]*order
@@ -463,24 +496,72 @@ class DFiniteFunction(object):
             
         return DFiniteFunction(self.__diff_eq.symmetric_power(n),Initial_conditions,self.__x0)
     
+    def __call__(self,g):
+        """
+        Composition avec une fonction g et plus tard evaluation d'une fonction
+        
+        sage: my_exp(2*z)
+        DFiniteFunction(Dz - 2,[1],x0=0)
+        """
+        if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
+            return self.composition(g)
+        else:
+            raise NotImplementedError# ici il faut faire l'evaluation de la fonction dans un point g
     
     def derivative(self):
         """
-        Cette fonction calcule le DFiniteFunction associé à la derive self
+        Cette fonction calcule la derive d'une DFiniteFunction
         
         Exemple:
-        sage: print p
-            (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1])
-        sage: print p.derivative()
-            (1/64*x^2*Dx^4 + (-2*x^2 + 33/32*x + 7)*Dx^3 + (-x^2 - 3*x - 1/2)*Dx^2 + (34/3*x^2 - 2*x - 6)*Dx + 68/3*x,[0, 1, 1, -11/2])
+        sage: my_arctan=DFiniteFunction((z^2 + 1)*Dz^2 + 2*z*Dz,[0, 1],0)
+        sage: my_arctan.derivative()
+        DFiniteFunction((z^2 + 1)*Dz + 2*z,[1],x0=0)
+        sage: my_arctan.derivative().annihilator()(arctan(z).derivative())
+        0
         """
         op=(self.__diff_eq.parent().gen())
-        tmp_diff=self.__diff_eq
+        tmp_diff=self.__diff_eq.annihilator_of_associate(op)
         tmp_IC=self.__initial_conditions
-        tmp_diff=op*tmp_diff
         n=tmp_diff.order()
-        tmp_IC=calculate_initial_conditions(self,n-1)
-        return DFiniteFunction(tmp_diff,tmp_IC,self.__x0)
+        tmp_IC=calculate_initial_conditions(self,n)
+        return DFiniteFunction(tmp_diff,tmp_IC[1:],self.__x0)
+    
+    def integral(self,y0=0):
+        """
+        INPUT:
+        y0:  la valeur de l'integrale de la fonction en x0
+        
+        OUTPUT:
+        cette fnction calcule l'integral de la  DFiniteFunction
+        
+        sage: my_log = DFiniteFunction(z*Dz^2+Dz, [0,1], x0=1)
+        sage: my_log.integral()
+        DFiniteFunction(z*Dz^3 + Dz^2,[0, 0, 1],x0=1) 
+        sage: my_log.integral().annihilator()(log(z).integral(z))
+        0
+        
+        RMQ: Dans cette fonction la premiere condition initiale F(x0)=y0 serait presque toujours 0 parce que on connait pas explicitement la primitive de notre fonction
+        """
+        diff=self.__diff_eq.annihilator_of_integral()
+        order=diff.order()
+        Ring=self.__diff_eq.base_ring()
+        IC=calculate_initial_conditions(self,order)
+        L=[0]*order
+        L[0]=IC[0]
+        f=1#factoriel
+        for i in range(1,order):
+            f=f*i
+            L[i]=IC[i]/f
+        power_series=Ring(L)#generation de la serie entiere
+        power_series_n=power_series.integral()#integration de la serie entiere
+        coeff_power_series_n=power_series_n.coefficients(sparse=False)#extraction des conditions initiales 
+        Initial_conditions=[0]*order
+        f=1
+        Initial_conditions[0]=y0
+        for i in range(1,order):
+            f=f*i
+            Initial_conditions[i]=coeff_power_series_n[i]*f
+        return DFiniteFunction(diff,Initial_conditions,self.__x0)
     
     def composition(self,g):
         """
@@ -517,17 +598,17 @@ class DFiniteFunction(object):
                     Initial_conditions=[self.__initial_conditions[0]]
                     if(n>=1):
                         Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
-                    print "Order",n+1
-                    print "Init values:",Initial_conditions
+                    #print "Order",n+1
+                    #print "Init values:",Initial_conditions
                     return DFiniteFunction(d,Initial_conditions,self.__x0)
                 
-                tmp_Polynome=g-self.__x0
+                tmp_Polynome=g-self.__x0# polynome P=g(x)-x0
                 if(isinstance(tmp_Polynome,FractionFieldElement)):
                     tmp_Polynome=tmp_Polynome.numerator()
                     
-                tmpList=tmp_Polynome.roots(self.__diff_eq.base_ring().base())
+                tmpList=tmp_Polynome.roots(self.__diff_eq.base_ring().base())#on cherche les points fixe de g tel que P=0 càd g(x1)=x0
                 
-                print "Roots:",tmpList
+                #print "Roots:",tmpList
                 if(tmpList):
                     x0=tmpList[0][0]
                     n=d.order()-1
@@ -536,11 +617,11 @@ class DFiniteFunction(object):
                     Initial_conditions=[self.__initial_conditions[0]]
                     if(n>=1):
                         Initial_conditions= Initial_conditions+[Faa_di_Bruno_formula(IC_f,IC_g,i+1) for i in range(n)]
-                    print "Order",n+1
-                    print "Init values:",Initial_conditions
-                    return DFiniteFunction(d,Initial_conditions,x0)
+                    #print "Order",n+1
+                    #print "Init values:",Initial_conditions
+                    return DFiniteFunction(d,Initial_conditions,x0)# Dès qu'on trouve x1 on construit la definite function definit en x1 et pas en x0
                 else:#pour faire cette partie de la composition il faut mettre en place une fonction call
-                    print "Roots:",tmpList
+                    #print "Roots:",tmpList
                     raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet.")
             else:
                 #print "The Result is not a Dfinite function"
@@ -552,7 +633,7 @@ class DFiniteFunction(object):
     def power_series(self,order=6):
         """
         order: est un entier naturel qui represente l'ordre de developement de la serie formele
-        Cette fonction retourne le developpement en serie  de l'equation differentielle self
+        Cette fonction retourne le developpement en serie  de l'equation differentielle en x0
         
         Exemple:
         
