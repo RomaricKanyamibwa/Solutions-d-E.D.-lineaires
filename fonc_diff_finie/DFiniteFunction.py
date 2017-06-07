@@ -136,7 +136,7 @@ def PolyToDiff(Poly,order = 1,x=0):
 
     sage: P=3*y^4 - 6*y^3 + 5
     sage: PolyToDiff(P)
-    DFiniteFunction((3*y^4 - 6*y^3 + 5)*Dy - 12*y^3 + 18*y^2,[5])
+    DFiniteFunction((3*y^4 - 6*y^3 + 5)*Dy - 12*y^3 + 18*y^2,[5],x0=0)
 
     """
     P=copy(Poly)
@@ -352,6 +352,12 @@ class DFiniteFunction(object):
         DFiniteFunction((z^2 + 1)*Dz + 2*z,[1],x0=0)
         sage: PolyToDiff(1/(z^2+1))==my_arctan.derivative()
         True
+        
+        sage:  (my_arctan.derivative()*PolyToDiff(1+z^2)) == PolyToDiff(0*z+1)
+        True
+        
+        sage:  (my_arctan.derivative()*PolyToDiff(1+z^2)) == PolyToDiff(0*z+100)
+        False
         """
         if(self.__x0!=other.__x0):
             raise NotImplementedError("Cannot yet compare D-Finite Functions defined in different Points")
@@ -386,7 +392,7 @@ class DFiniteFunction(object):
         sage: from  DFiniteFunction import *;R.<x> = PolynomialRing(QQ); A.<Dx> = OreAlgebra(R);K=A.random_element(3);
         sage: p=DFiniteFunction(K,[0,1,1],0);
         sage: print p
-        (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1])
+        (1/64*x^2*Dx^3 + (-2*x^2 + x + 7)*Dx^2 + (-x^2 + x - 3/2)*Dx + 34/3*x^2 - 7,[0, 1, 1],x0=0)
         sage: p.coefficients()
         [34/3*x^2 - 7, -x^2 + x - 3/2, -2*x^2 + x + 7, 1/64*x^2]
         """
@@ -405,12 +411,22 @@ class DFiniteFunction(object):
         
     
     def __sub__(self,other):
-        """Sustraction de 2 equa diff"""
+        """Sustraction de DFiniteFunction"""
         z=-other
         return self+z
 
     def __add__(self,other):
-        """Addition de 2 equa diff"""
+        """Addition de DFiniteFunction
+        
+        Exemple:
+        sage: my_arctan=DFiniteFunction((z^2 + 1)*Dz^2 + 2*z*Dz,[0, 1],x0=0)
+        sage: my_exp=DFiniteFunction(Dz - 1,[1],x0=0)
+        sage: my_arctan+my_exp
+        DFiniteFunction((z^3 + z^2 + z + 1)*Dz^3 + (-z^3 + z^2 + 3*z - 3)*Dz^2 + (-2*z^2 - 4*z + 2)*Dz,[1, 2, 1],x0=0)
+        sage: my_log = DFiniteFunction(z*Dz^2+Dz, [0,1], x0=1)
+        sage: my_arctan+my_log
+        ValueError: Incompatible initial condition, the initial conditions must be defined on the same point x0
+        """
         if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )):
             L=copy(self.__initial_conditions)
             L[0]=other+self.__initial_conditions[0]
@@ -427,21 +443,23 @@ class DFiniteFunction(object):
             raise ValueError("Incompatible initial condition, the initial conditions must be defined on the same point x0")
             
         else:
-            z0=self.__diff_eq.lclm(other.annihilator())
-        newlist =[]
-        n=z0.order()
+            sum_operator=self.__diff_eq.lclm(other.annihilator())
+        sum_Initial_conditions =[]
+        n=sum_operator.order()
         L1=calculate_initial_conditions(self,n-1)
         L2=calculate_initial_conditions(other,n-1)
         i=0
-        newlist = [L1[i] + L2[i] for i in range(n)]
-        z = DFiniteFunction(z0,newlist,self.__x0)
+        sum_Initial_conditions = [L1[i] + L2[i] for i in range(n)]
+        z = DFiniteFunction(sum_operator,sum_Initial_conditions,self.__x0)
         return z
 
 
     def __mul__(self,other):
-        """Multiplication de 2 equa diff
-        sage:cos4t=DFiniteFunction(Dy^2+16,[1,0])
-        sage: cos4t*cos4t*cos4t
+        """Multiplication de DFiniteFunction
+        
+        Exemple:
+        sage:cos4z=DFiniteFunction(Dz^2+16,[1,0])
+        sage: cos4z*cos4z*cos4z
         DFiniteFunction(Dz^4 + 160*Dz^2 + 2304,[1, 0, -48, 0],x0=0)
         """
         if(isinstance( other, ( int, long,float,complex,Integer,Rational ) )):
@@ -458,14 +476,14 @@ class DFiniteFunction(object):
         if(self.__x0!=other.initial_conditions()[0]):
             raise ValueError,"Incompatible initial condition, the initial conditions must be defined on the same point x0"
         else:
-            z0=self.__diff_eq.symmetric_product(other.annihilator())
-        newlist =[]
-        n=z0.order()
+            product_operator=self.__diff_eq.symmetric_product(other.annihilator())
+        product_Initial_Conditions =[]
+        n=product_operator.order()
         L1=calculate_initial_conditions(self,n-1)
         L2=calculate_initial_conditions(other,n-1)
         i=0
-        newlist = [Leibniz_Product_rule(L1[:i+1],L2[:i+1],i) for i in range(n)]
-        z = DFiniteFunction(z0,newlist,self.__x0)
+        product_Initial_Conditions = [Leibniz_Product_rule(L1[:i+1],L2[:i+1],i) for i in range(n)]
+        z = DFiniteFunction(product_operator,product_Initial_Conditions,self.__x0)
         return z
     
     def __pow__(self,n):
@@ -486,7 +504,7 @@ class DFiniteFunction(object):
             L[i]=CI[i]/f
         power_series=Ring(L)
         power_series_n=power_series**n
-        coeff_power_series_n=power_series_n.coefficients(sparse=False)
+        coeff_power_series_n=power_series_n.numerator().list()
         Initial_conditions=[0]*order
         f=1
         Initial_conditions[0]=coeff_power_series_n[0]
@@ -570,12 +588,9 @@ class DFiniteFunction(object):
         Pour l'instant, la fonction retourne la composition uniquement sous la forme d'une équation diff et pas comme une DFiniteFunction
         
         Exemple:
-        sage: cos4t=DFiniteFunction(Dx^2+16,[1,0])
-        sage: cos4t.composition(x^2)
-            ('Fraction Field', x^2)
-            P(x,g)= 0
-            Composition: x*Dx^2 - Dx + 64*x^3
-            x*Dx^2 - Dx + 64*x^3
+        sage: my_exp=DFiniteFunction(Dz - 1,[1],x0=0)
+        sage: my_exp.composition(z^2)
+        DFiniteFunction(Dz - 2*z,[1],x0=0)
         """
         
         if(isinstance(g,Polynomial) or isinstance(g,FractionFieldElement)):
@@ -584,7 +599,7 @@ class DFiniteFunction(object):
             x, y = QQ['x','y'].gens()
             P=g(x)-y
             #print "P(x,g)=",P(x,g(x))
-            if(P(x,g(x))==0):
+            if(P(x,g(x))==0 ):
                 #print "Composition:",d
                 if(isinstance(g,FractionFieldElement)):
                     if(g.denominator()(self.__x0)==0):
@@ -622,7 +637,7 @@ class DFiniteFunction(object):
                     return DFiniteFunction(d,Initial_conditions,x0)# Dès qu'on trouve x1 on construit la definite function definit en x1 et pas en x0
                 else:#pour faire cette partie de la composition il faut mettre en place une fonction call
                     #print "Roots:",tmpList
-                    raise NotImplementedError("for an x1 other than the x0 of the initial values f(g(x)) is not implemented yet.")
+                    raise NotImplementedError("Need to implement evaluation  otherwise g must verify g(x0)=x0  or g must have an x1 so that g(x1)=x0 ")# il faut faire l'evaluation d'une fonction pour que la composition marche pour tout polynome ou fraction rationelle
             else:
                 #print "The Result is not a Dfinite function"
                 raise NotImplementedError("The Result is not a Dfinite function")
@@ -635,6 +650,7 @@ class DFiniteFunction(object):
         order: est un entier naturel qui représente l'ordre du dévelopement de la série formelle
         Cette fonction retourne le developpement en série entière de l'équation différentielle en x0
         
+        Pour x0!=0 la methode ne marche pas exactement comme voulu , elle garde pas la factorisation f(x0)+(f'(x0)/1! )*(x-x0)+. . .
         Exemple:
         
         sage: cos4t.power_series(10)
@@ -658,6 +674,3 @@ class DFiniteFunction(object):
         Power_ring=PowerSeriesRing(Ring,Ring_gen)
         return Power_ring(L).O(order)
     
-
-        
-        
